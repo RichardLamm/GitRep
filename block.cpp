@@ -4,10 +4,40 @@ block::block(int x, int y, int tempType){
     ID = {x,y};
     type = tempType;
     SetActions(type);
+    switch(type){
+    case 0:
+        limits.clear();
+        limits = {3};
+        break;
+    case 1:
+        limits.clear();
+        limits = {2};
+        break;
+    case 2:
+        limits.clear();
+        limits = {3};
+        break;
+    case 3:
+        limits.clear();
+        limits = {0,2};
+        break;
+    default:
+        limits.clear();
+        break;
+    }
 }
 
 int block::getType(){
     return type;
+}
+
+vector<int> block::getLimits(vector<int> rajat){
+    if (!limits.empty()){
+        for( int i{0}; i<limits.size(); i++){
+            rajat.push_back(limits.at(i));
+        }
+    }
+    return rajat;
 }
 
 vector<string> block::getActions(){

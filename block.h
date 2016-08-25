@@ -17,12 +17,15 @@ public:
     void SetActions(int);
     vector<string> getActions();
     int getType();
+    vector<int> getLimits(vector<int>);
 
 private:
     pair<int, int> ID;
     int type;
     vector<SDL_Surface*> kuvat;
     vector<string> actions;
+    vector<int> limits;
+    vector<int> surround;
 };
 
 #endif // BLOCK_H_INCLUDED

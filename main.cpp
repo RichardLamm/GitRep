@@ -13,6 +13,7 @@
     -piirtojärjestys mappiin (depth) ja uudenlainen piirtofunktio?
     -oikeasti jonkinlaista interactaamista palikoiden kanssa
     -kartan laajempi generoiminen
+    -painotetut blockien generoinnit
     -pelaajan modelin muuttaminen
     -lisää kohteita maastoon
 */
@@ -60,6 +61,7 @@ vector<SDL_Surface*> maaritaPiirrettavat(int tyyppi, vector<SDL_Surface*> kuvat)
         palautettava = {kuvat.at(sora), kuvat.at(kivi)};
         break;
     default:
+        cout << "virheellinen arvo kuvien määrittelyssä" << endl;
         break;
     }
     return palautettava;
@@ -126,6 +128,8 @@ int main(int argc, char *argv[])
     int muutos = 1;
     int edellinen_x = -1;
     int edellinen_y = -1;
+    int edellinenValikkoX = -1;
+    int edellinenValikkoY = -1;
     bool poistu = false;
     bool valikko = false;
     SDL_Event e;
@@ -168,14 +172,14 @@ int main(int argc, char *argv[])
 
     vector<SDL_Surface*> piirto;
     for (int i = 0; i<x_blocks; i++){
-            for (int j = 0; j<y_blocks; j++){
-                //piirtää taustan kartta-mapin tietojen perusteella
-                pair<int, int> kohta {i,j};
-                piirto = maaritaPiirrettavat((kartta.at(kohta).getType()), kuvat);
-                kartta.at(kohta).SetImages(piirto);
-                //assosioidaan piirrettävät kuvat oikean blockin kanssa
-                piirrettavat.insert(pair<pair<int,int>, vector<SDL_Surface*>>({i, j}, piirto));
-            }
+        for (int j = 0; j<y_blocks; j++){
+            //piirtää taustan kartta-mapin tietojen perusteella
+            pair<int, int> kohta {i,j};
+            piirto = maaritaPiirrettavat((kartta.at(kohta).getType()), kuvat);
+            kartta.at(kohta).SetImages(piirto);
+            //assosioidaan piirrettävät kuvat oikean blockin kanssa
+            piirrettavat.insert(pair<pair<int,int>, vector<SDL_Surface*>>({i, j}, piirto));
+        }
     }
 
     piirraTausta(piirrettavat, ren);
@@ -207,6 +211,11 @@ int main(int argc, char *argv[])
                     for (int i{0}; i < options.size(); i++){
                         loota.y = y-(y%64) + 15*i + 10;
                         sisaLoota.y = y-(y%64) + 15*i + 11;
+                        if (edellinenValikkoX != -1 && edellinenValikkoY != -1){
+                            piirraTausta(piirrettavat, ren, {edellinenValikkoX, edellinenValikkoY});
+                            if( edellinenValikkoX != x_blocks ){piirraTausta(piirrettavat, ren, {edellinenValikkoX+1, edellinenValikkoY});}
+                            if (edellinen_x != -1 && edellinen_y != -1){piirra(pelaaja, ren, edellinen_x, edellinen_y, 64, 64);}
+                        }
                         SDL_RenderDrawRect(ren, &loota);
                         //muutetaan väri valkoiseksi
                         SDL_SetRenderDrawColor(ren, 0xFF, 0xFF, 0xFF, 0xFF);
@@ -218,6 +227,8 @@ int main(int argc, char *argv[])
                         teksti = TTF_RenderText_Solid(font, options[i].c_str(), tekstinVari);
                         TTF_SizeUTF8(font, options[i].c_str(), &FontX, &FontY);
                         piirra(teksti, ren, x-(x%64)+(50-FontX/2) + 10, y-(y%64) + 15*i + 10, FontX, FontY);
+                        edellinenValikkoX = (x-x%64)/64;
+                        edellinenValikkoY = (y-y%64)/64;
                     }
                     //mene valikkotilaan, missä oikealla klikkauksella valitaan toiminto, eikä siirretä pelaajaa
                     valikko = true;
