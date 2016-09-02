@@ -22,8 +22,8 @@
 const int block_size = 64;
 const int window_height = 1080;
 const int window_width = 1920;
-const int x_blocks = (window_width-(window_width%64))/64;
-const int y_blocks = (window_height-(window_height%64))/64;
+const int x_blocks = (window_width-(window_width%64))/64;       //30
+const int y_blocks = (window_height-(window_height%64))/64;     //16,875
 
 
 using namespace std;
@@ -116,20 +116,24 @@ int main(int argc, char *argv[])
     }
     TTF_Init();
     SDL_Color tekstinVari;
-    tekstinVari.b = 255;
+    tekstinVari.b = 100;
+    tekstinVari.r = 0;
+    tekstinVari.g = 0;
+    tekstinVari.a = 255;
     TTF_Font* font = TTF_OpenFont("ARIAL.TTF", 15);
     //TTF_SetFontOutline(font, 1);
     int FontX;
     int FontY;
     SDL_Surface* teksti;
 
-    int pelaaja_x;
-    int pelaaja_y;
+    int pelaaja_x = 896;
+    int pelaaja_y = 448;
     int muutos = 1;
-    int edellinen_x = -1;
-    int edellinen_y = -1;
+    int edellinen_x = pelaaja_x;
+    int edellinen_y = pelaaja_y;
     int edellinenValikkoX = -1;
     int edellinenValikkoY = -1;
+    map<SDL_Rect*,string> valikkoMappi;
     bool poistu = false;
     bool valikko = false;
     SDL_Event e;
@@ -183,12 +187,12 @@ int main(int argc, char *argv[])
     }
 
     piirraTausta(piirrettavat, ren);
+    piirra(pelaaja, ren, pelaaja_x, pelaaja_y, 64, 64);
+
 
     while(poistu != true){
 
         //optimoitavissa threadeilla -> thread hoitamaan yksittäisen blockin piirtoa ja vapautuessaan ottaa seuraavan käsittelyyn
-
-
 
 
         SDL_PumpEvents();
@@ -196,6 +200,7 @@ int main(int argc, char *argv[])
             //hiiren näppäintä painetaan ja painettava näppäin on vasen
             if( e.type == SDL_MOUSEBUTTONDOWN){
                 if(SDL_GetMouseState(NULL, NULL) != SDL_BUTTON_LEFT){
+                    valikkoMappi.clear();
                     int x;
                     int y;
                     SDL_GetMouseState( &x, &y);
@@ -207,7 +212,9 @@ int main(int argc, char *argv[])
                     sisaLoota.x = x-(x%64)+11;
                     sisaLoota.h = 15;
                     sisaLoota.w = 98;
-                    vector<string> options = {"hakkaa puuta", "hakkaa kivestä"};
+                    vector<string> options;
+                    pair<int, int> kohta{(x-x%64)/64,(y-y%64)/64};
+                    options = kartta.at(kohta).getActions();
                     for (int i{0}; i < options.size(); i++){
                         loota.y = y-(y%64) + 15*i + 10;
                         sisaLoota.y = y-(y%64) + 15*i + 11;
@@ -216,14 +223,14 @@ int main(int argc, char *argv[])
                             if( edellinenValikkoX != x_blocks ){piirraTausta(piirrettavat, ren, {edellinenValikkoX+1, edellinenValikkoY});}
                             if (edellinen_x != -1 && edellinen_y != -1){piirra(pelaaja, ren, edellinen_x, edellinen_y, 64, 64);}
                         }
+
+                        valikkoMappi.insert(pair<SDL_Rect*, string>(&loota, options.at(i).substr()));
                         SDL_RenderDrawRect(ren, &loota);
                         //muutetaan väri valkoiseksi
                         SDL_SetRenderDrawColor(ren, 0xFF, 0xFF, 0xFF, 0xFF);
                         SDL_RenderFillRect(ren, &sisaLoota);
                         //muutetaan väri takaisin mustaksi
                         SDL_SetRenderDrawColor(ren, 0x00, 0x00, 0x00, 0xFF);
-                        pair<int, int> kohta{(x-x%64)/64,(y-y%64)/64};
-                        options = kartta.at(kohta).getActions();
                         teksti = TTF_RenderText_Solid(font, options[i].c_str(), tekstinVari);
                         TTF_SizeUTF8(font, options[i].c_str(), &FontX, &FontY);
                         piirra(teksti, ren, x-(x%64)+(50-FontX/2) + 10, y-(y%64) + 15*i + 10, FontX, FontY);
@@ -236,7 +243,7 @@ int main(int argc, char *argv[])
                     muutos = 1;
 
                 }
-                else if (SDL_GetMouseState(NULL, NULL) == SDL_BUTTON_LEFT){
+                else if (SDL_GetMouseState(NULL, NULL) == SDL_BUTTON_LEFT && valikko == false){
                     //hakee hiiren koordinaatit
                     SDL_GetMouseState( &pelaaja_x, &pelaaja_y);
                     if (pelaaja_x >= 0 && pelaaja_x <= x_blocks*block_size && pelaaja_y >= 0 && pelaaja_y <= y_blocks*block_size){
@@ -257,7 +264,29 @@ int main(int argc, char *argv[])
                         }
                     }
                 }
-
+                else if (SDL_GetMouseState(NULL, NULL) == SDL_BUTTON_LEFT && valikko == true){
+                    int x;
+                    int y;
+                    SDL_GetMouseState( &x, &y);
+                    x = (x-x%64)/64;
+                    y = (y-y%64)/64;
+                    map<SDL_Rect*, string>::iterator it = valikkoMappi.begin();
+                    while (it != valikkoMappi.end()){
+                        int vertausX = (it->first->x - it->first->x%64)/64;
+                        int vertausY = (it->first->y - it->first->y%64)/64;
+                        if((x == vertausX || x == vertausX+1) && y == vertausY ){
+                            string valinta = it->second;
+                            //funktio, jolle argumenttina string valinta ja joka prosessoi kyseisen valinnan
+                            break;
+                        }
+                        it++;
+                    }
+                    piirraTausta(piirrettavat, ren, {edellinenValikkoX, edellinenValikkoY});
+                    if( edellinenValikkoX != x_blocks ){piirraTausta(piirrettavat, ren, {edellinenValikkoX+1, edellinenValikkoY});}
+                    if (edellinen_x != -1 && edellinen_y != -1){piirra(pelaaja, ren, edellinen_x, edellinen_y, 64, 64);}
+                    valikko = false;
+                    muutos = 1;
+                }
             }
             if( e.type == SDL_KEYDOWN)
             {
