@@ -1,66 +1,63 @@
 #include "block.h"
 
+//m‰‰rittelee luotavan palikan
 block::block(int x, int y, int tempType){
-    ID = {x,y};
-    type = tempType;
-    SetActions(type);
-    switch(type){
+    ID_ = {x,y};
+    type_ = tempType;
+    SetActions(type_);
+    //varmistetaan ett‰ rajoitukset on alustettu tyhj‰ksi ja asetetaan ne sitten
+    switch(type_){
     case 0:
-        limits.clear();
-        limits = {3};
+        limits_.clear();
+        limits_ = {3};
         break;
     case 1:
-        limits.clear();
-        limits = {2};
+        limits_.clear();
+        limits_ = {2};
         break;
     case 2:
-        limits.clear();
-        limits = {3};
+        limits_.clear();
+        limits_ = {3};
         break;
     case 3:
-        limits.clear();
-        limits = {0,2};
+        limits_.clear();
+        limits_ = {0,2};
         break;
     default:
-        limits.clear();
+        limits_.clear();
         break;
     }
 }
 
 int block::getType(){
-    return type;
+    return type_;
 }
 
-vector<int> block::getLimits(vector<int> rajat){
-    if (!limits.empty()){
-        for( int i{0}; i<limits.size(); i++){
-            rajat.push_back(limits.at(i));
-        }
-    }
-    return rajat;
+vector<int> block::getLimits(){
+    return limits_;
 }
 
 vector<string> block::getActions(){
-    return actions;
+    return actions_;
 }
 
 void block::SetImages(vector<SDL_Surface*> images){
-    kuvat = images;
+    kuvat_ = images;
 }
 
 void block::SetActions(int type){
     switch(type){
     case 2:
-        actions.clear();
-        actions.push_back("hakkaa puuta");
+        actions_.clear();
+        actions_.push_back("hakkaa puuta");
         break;
     case 3:
-        actions.clear();
-        actions.push_back("hakkaa kivest‰");
+        actions_.clear();
+        actions_.push_back("hakkaa kivest‰");
         break;
     default:
-        actions.clear();
-        actions.push_back("tutki");
+        actions_.clear();
+        actions_.push_back("tutki");
         break;
     }
 }

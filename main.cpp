@@ -1,11 +1,7 @@
-#include <iostream>
-#include <SDL.h>
-#include <map>
-#include <vector>
 #include "map.h"
 #include "block.h"
-#include <string>
-#include <SDL_ttf.h>
+#include "draw.h"
+
 
 /*TODO:
     -valikko
@@ -22,92 +18,18 @@
 const int block_size = 64;
 const int window_height = 1080;
 const int window_width = 1920;
-const int x_blocks = (window_width-(window_width%64))/64;       //30
-const int y_blocks = (window_height-(window_height%64))/64;     //16,875
+//lasketaan montako palikkaa mahtuu käytettävälle alueelle kentäksi
+const int x_blocks = (window_width-(window_width%block_size))/block_size;       //30 palikkaa
+const int y_blocks = (window_height-(window_height%block_size))/block_size;     //16,875
 
 
 using namespace std;
 
-void piirra(SDL_Surface *kuvaT, SDL_Renderer *renT, int x, int y, int w, int h){
-    SDL_Rect alue;
-    alue.x = x;
-    alue.y = y;
-    alue.w = w;
-    alue.h = h;
-
-    SDL_Texture *tex = SDL_CreateTextureFromSurface(renT, kuvaT);
-    //renderöijä, tekstuuri, alkuperäisen kuvan alue, piirtoalue ikkunassa
-    SDL_RenderCopy(renT, tex ,NULL, &alue );
-    //SDL_RenderPresent(renT);
-    return;
-}
-
-vector<SDL_Surface*> maaritaPiirrettavat(int tyyppi, vector<SDL_Surface*> kuvat)
-{
-    enum {ruoho, sora, pelaaja, puu, kivi};
-    vector<SDL_Surface*> palautettava;
-    switch(tyyppi)
-    {
-    case 0:
-        palautettava = {kuvat.at(ruoho)};
-        break;
-    case 1:
-        palautettava = {kuvat.at(sora)};
-        break;
-    case 2:
-        palautettava = {kuvat.at(ruoho), kuvat.at(puu)};
-        break;
-    case 3:
-        palautettava = {kuvat.at(sora), kuvat.at(kivi)};
-        break;
-    default:
-        cout << "virheellinen arvo kuvien määrittelyssä" << endl;
-        break;
-    }
-    return palautettava;
-}
-
-void piirraTausta(map<pair<int,int>, vector<SDL_Surface*>> piirrettavat, SDL_Renderer *ren, pair<int, int> pari = {-1, -1})
-{
-
-    if (pari.first == -1 && pari.second == -1){
-    //tyhjentää renderin -> piirto puhtaalta pöydältä
-    SDL_RenderClear(ren);
-
-    //käy läpi kaikki ruudulla näkyvät blockit
-    for (int i = 0; i<x_blocks; i++){
-        for (int j = 0; j<y_blocks; j++){
-        pari = {i,j};
-            for (int n = 0; n < piirrettavat[pari].size(); n++){
-                //piirtää blockin kaikki kohteet
-                piirra(piirrettavat[pari].at(n), ren, i*64, j*64, 64, 64);
-            }
-        }
-    }
-    piirra(piirrettavat[{-1,-1}].at(0), ren, 0, y_blocks*block_size, window_width, window_height % 64);
-    }
-    else{
-        for (int n = 0; n < piirrettavat[pari].size(); n++){
-            piirra(piirrettavat[pari].at(n), ren, pari.first*64, pari.second*64, 64, 64);
-        }
-    }
-
-    return;
-}
-
-SDL_Surface* lataaKuva(string path, bool lapinakyva)
-{
-    SDL_Surface * kuva = SDL_LoadBMP(path.c_str());
-    if( lapinakyva == true){
-        //asetetaan kuvista väri rgb(0,255,255) läpinäkyväksi -> tausta on läpinäkyvä
-        SDL_SetColorKey(kuva, SDL_TRUE, SDL_MapRGB(kuva->format, 0, 0xFF, 0xFF));
-    }
-    SDL_Surface * optimoitu = SDL_ConvertSurface(kuva, kuva->format, NULL);
-    return optimoitu;
-}
 
 int main(int argc, char *argv[])
 {
+    //annetaan piirtoluokalle vakioiden pointterit
+    alustaPiirto(&block_size, &window_height, &window_width, &x_blocks, &y_blocks);
 
     //alustetaan SDL:n videon käsittely, ja jos se epäonnistuu, lopetetaan ohjelman suoritus
     if (SDL_Init(SDL_INIT_VIDEO|SDL_INIT_AUDIO|SDL_INIT_EVENTS) != 0){
@@ -187,44 +109,55 @@ int main(int argc, char *argv[])
     }
 
     piirraTausta(piirrettavat, ren);
-    piirra(pelaaja, ren, pelaaja_x, pelaaja_y, 64, 64);
+    piirra(pelaaja, ren, pelaaja_x, pelaaja_y, block_size, block_size);
 
 
     while(poistu != true){
 
         //optimoitavissa threadeilla -> thread hoitamaan yksittäisen blockin piirtoa ja vapautuessaan ottaa seuraavan käsittelyyn
 
-
+        //käyttäjän syötteiden käsittely
         SDL_PumpEvents();
         while ( SDL_PollEvent(&e) != 0){
             //hiiren näppäintä painetaan ja painettava näppäin on vasen
             if( e.type == SDL_MOUSEBUTTONDOWN){
+                //jos painettu hiiren nappi ei ole vasen
                 if(SDL_GetMouseState(NULL, NULL) != SDL_BUTTON_LEFT){
                     valikkoMappi.clear();
                     int x;
                     int y;
                     SDL_GetMouseState( &x, &y);
+                    //jos klikkaus on yli kartan alueen
+                    if( (x<0) | (x>1920) | (y<0) | (y>1024) ){break;}
+                    //klikkaus tavara-alueella
+                    else if( (x>0) && (x<1920) && (y>1024) && (y<1080) ){
+                        //tavaroiden right click funktionaalisuus tänne
+                        break;
+                    }
+                    //jos klikkaus oli kartta-alueen sisällä, jatketaan normaalisti
                     SDL_Rect loota;
-                    loota.x = x-(x%64)+10;
+                    loota.x = x-(x%block_size)+10;
                     loota.h = 17;
                     loota.w = 100;
                     SDL_Rect sisaLoota;
-                    sisaLoota.x = x-(x%64)+11;
+                    sisaLoota.x = x-(x%block_size)+11;
                     sisaLoota.h = 15;
                     sisaLoota.w = 98;
                     vector<string> options;
-                    pair<int, int> kohta{(x-x%64)/64,(y-y%64)/64};
+                    //paikka normalisoituna palikoille, eli ID muoto
+                    pair<int, int> kohta{(x-x%block_size)/block_size,(y-y%block_size)/block_size};
+                    //haetaan palikan toiminnot ID:llä
                     options = kartta.at(kohta).getActions();
-                    for (int i{0}; i < options.size(); i++){
-                        loota.y = y-(y%64) + 15*i + 10;
-                        sisaLoota.y = y-(y%64) + 15*i + 11;
+                    for (unsigned int i{0}; i < options.size(); i++){
+                        loota.y = y-(y%block_size) + 15*i + 10;
+                        sisaLoota.y = y-(y%block_size) + 15*i + 11;
                         if (edellinenValikkoX != -1 && edellinenValikkoY != -1){
                             piirraTausta(piirrettavat, ren, {edellinenValikkoX, edellinenValikkoY});
                             if( edellinenValikkoX != x_blocks ){piirraTausta(piirrettavat, ren, {edellinenValikkoX+1, edellinenValikkoY});}
                             if (edellinen_x != -1 && edellinen_y != -1){piirra(pelaaja, ren, edellinen_x, edellinen_y, 64, 64);}
                         }
 
-                        valikkoMappi.insert(pair<SDL_Rect*, string>(&loota, options.at(i).substr()));
+                        valikkoMappi.insert(pair<SDL_Rect*, string>(&loota, options.at(i).substr()) );
                         SDL_RenderDrawRect(ren, &loota);
                         //muutetaan väri valkoiseksi
                         SDL_SetRenderDrawColor(ren, 0xFF, 0xFF, 0xFF, 0xFF);
@@ -233,9 +166,9 @@ int main(int argc, char *argv[])
                         SDL_SetRenderDrawColor(ren, 0x00, 0x00, 0x00, 0xFF);
                         teksti = TTF_RenderText_Solid(font, options[i].c_str(), tekstinVari);
                         TTF_SizeUTF8(font, options[i].c_str(), &FontX, &FontY);
-                        piirra(teksti, ren, x-(x%64)+(50-FontX/2) + 10, y-(y%64) + 15*i + 10, FontX, FontY);
-                        edellinenValikkoX = (x-x%64)/64;
-                        edellinenValikkoY = (y-y%64)/64;
+                        piirra(teksti, ren, x-(x%block_size)+(50-FontX/2) + 10, y-(y%block_size) + 15*i + 10, FontX, FontY);
+                        edellinenValikkoX = (x-x%block_size)/block_size;
+                        edellinenValikkoY = (y-y%block_size)/block_size;
                     }
                     //mene valikkotilaan, missä oikealla klikkauksella valitaan toiminto, eikä siirretä pelaajaa
                     valikko = true;
@@ -249,31 +182,32 @@ int main(int argc, char *argv[])
                     if (pelaaja_x >= 0 && pelaaja_x <= x_blocks*block_size && pelaaja_y >= 0 && pelaaja_y <= y_blocks*block_size){
                         //piirraTausta(piirrettavat, ren);
                         //pelaaja piirretään keskelle blockia, mitä on klikattu
-                        pelaaja_x = (pelaaja_x-(pelaaja_x%64));
-                        pelaaja_y = (pelaaja_y-(pelaaja_y%64));
+                        pelaaja_x = (pelaaja_x-(pelaaja_x%block_size));
+                        pelaaja_y = (pelaaja_y-(pelaaja_y%block_size));
 
                         //ei piirretä uudelleen, jos paikka ei ole muuttunut
                         if(pelaaja_x != edellinen_x || pelaaja_y != edellinen_y){
                             if ( edellinen_x != -1 && edellinen_y != -1){
                                 piirraTausta(piirrettavat, ren, {edellinen_x/block_size, edellinen_y/block_size});
                             }
-                            piirra(pelaaja, ren, pelaaja_x, pelaaja_y, 64, 64);
+                            piirra(pelaaja, ren, pelaaja_x, pelaaja_y, block_size, block_size);
                             muutos = 1;
                             edellinen_x = pelaaja_x;
                             edellinen_y = pelaaja_y;
                         }
                     }
                 }
+                //jos valikko on aktiivisena ja klikataan vasemmalla, katsotaan valittiinko jokin toiminto
                 else if (SDL_GetMouseState(NULL, NULL) == SDL_BUTTON_LEFT && valikko == true){
                     int x;
                     int y;
                     SDL_GetMouseState( &x, &y);
-                    x = (x-x%64)/64;
-                    y = (y-y%64)/64;
+                    x = (x-x%block_size)/block_size;
+                    y = (y-y%block_size)/block_size;
                     map<SDL_Rect*, string>::iterator it = valikkoMappi.begin();
                     while (it != valikkoMappi.end()){
-                        int vertausX = (it->first->x - it->first->x%64)/64;
-                        int vertausY = (it->first->y - it->first->y%64)/64;
+                        int vertausX = (it->first->x - it->first->x%block_size)/block_size;
+                        int vertausY = (it->first->y - it->first->y%block_size)/block_size;
                         if((x == vertausX || x == vertausX+1) && y == vertausY ){
                             string valinta = it->second;
                             //funktio, jolle argumenttina string valinta ja joka prosessoi kyseisen valinnan
@@ -283,11 +217,12 @@ int main(int argc, char *argv[])
                     }
                     piirraTausta(piirrettavat, ren, {edellinenValikkoX, edellinenValikkoY});
                     if( edellinenValikkoX != x_blocks ){piirraTausta(piirrettavat, ren, {edellinenValikkoX+1, edellinenValikkoY});}
-                    if (edellinen_x != -1 && edellinen_y != -1){piirra(pelaaja, ren, edellinen_x, edellinen_y, 64, 64);}
+                    if (edellinen_x != -1 && edellinen_y != -1){piirra(pelaaja, ren, edellinen_x, edellinen_y, block_size, block_size);}
                     valikko = false;
                     muutos = 1;
                 }
             }
+            //näppäimistön syötteet
             if( e.type == SDL_KEYDOWN)
             {
                 const Uint8 *state = SDL_GetKeyboardState(NULL);

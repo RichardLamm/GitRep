@@ -12,20 +12,25 @@ using namespace std;
 class block{
 
 public:
+    //x, y, tyyppi
     block(int, int, int);
     void SetImages(vector<SDL_Surface*>);
+    //toiminnat tietylle laattatyypille
     void SetActions(int);
+    //palauttaa laatan toiminnat
     vector<string> getActions();
+    //palauttaa laatan tyypin
     int getType();
-    vector<int> getLimits(vector<int>);
+    //palauttaa laatan rajoitteet
+    vector<int> getLimits();
 
 private:
-    pair<int, int> ID;
-    int type;
-    vector<SDL_Surface*> kuvat;
-    vector<string> actions;
-    vector<int> limits;
-    vector<int> surround;
+    pair<int, int> ID_;
+    int type_;
+    vector<SDL_Surface*> kuvat_;
+    vector<string> actions_;
+    vector<int> limits_;
+    vector<int> surround_;
 };
 
 #endif // BLOCK_H_INCLUDED
