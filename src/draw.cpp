@@ -57,23 +57,31 @@ vector<SDL_Surface*> maaritaPiirrettavat(int tyyppi, vector<SDL_Surface*> kuvat)
 
 void piirraTausta(map<pair<int,int>, vector<SDL_Surface*>> piirrettavat, SDL_Renderer *ren, pair<int, int> pari)
 {
-
+    //koko ruudun piirto
     if (pari.first == -1 && pari.second == -1){
-    //tyhjentää renderin -> piirto puhtaalta pöydältä
-    SDL_RenderClear(ren);
+        //tyhjentää renderin -> piirto puhtaalta pöydältä
+        SDL_RenderClear(ren);
 
-    //käy läpi kaikki ruudulla näkyvät blockit
-    for (int i = 0; i<*x_blocks_ptr; i++){
-        for (int j = 0; j<*y_blocks_ptr; j++){
-        pari = {i,j};
-            for (unsigned int n = 0; n < piirrettavat[pari].size(); n++){
-                //piirtää blockin kaikki kohteet
-                piirra(piirrettavat[pari].at(n), ren, i*(*block_size_ptr), j*(*block_size_ptr), *block_size_ptr, *block_size_ptr);
+        //käy läpi kaikki ruudulla näkyvät blockit
+        for (int i = 0; i<*x_blocks_ptr; i++){
+            for (int j = 0; j<*y_blocks_ptr; j++){
+                pari = {i,j};
+                //piirrä kaikki koordinaatin objektit
+                for (unsigned int n = 0; n < piirrettavat[pari].size(); n++){
+                    //piirtää blockin kaikki kohteet
+                    piirra(piirrettavat[pari].at(n), ren, i*(*block_size_ptr), j*(*block_size_ptr), *block_size_ptr, *block_size_ptr);
+                }
             }
         }
+        piirra(piirrettavat[{-2,-2}].at(0), ren, 0, *y_blocks_ptr*(*block_size_ptr), (*window_width_ptr), *window_height_ptr % *block_size_ptr);
     }
-    piirra(piirrettavat[{-1,-1}].at(0), ren, 0, *y_blocks_ptr*(*block_size_ptr), (*window_width_ptr), *window_height_ptr % *block_size_ptr);
+
+    //UI:n päivitys
+    else if (pari.first == -2 && pari.second == -2){
+        piirra(piirrettavat[{-2,-2}].at(0), ren, 0, *y_blocks_ptr*(*block_size_ptr), (*window_width_ptr), *window_height_ptr % *block_size_ptr);
     }
+
+    //osittainen piirto
     else{
         for (unsigned int n = 0; n < piirrettavat[pari].size(); n++){
             piirra(piirrettavat[pari].at(n), ren, pari.first*(*block_size_ptr), pari.second*(*block_size_ptr), *block_size_ptr, *block_size_ptr);

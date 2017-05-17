@@ -1,6 +1,7 @@
 #include "map.h"
 #include "block.h"
 #include "draw.h"
+#include "item.h"
 
 
 /*TODO:
@@ -16,11 +17,13 @@
 
 //constit
 const int block_size = 64;
+const int item_size = 50;
+const int frame_size = item_size+4;
 const int window_height = 1080;
 const int window_width = 1920;
 //lasketaan montako palikkaa mahtuu k‰ytett‰v‰lle alueelle kent‰ksi
 const int x_blocks = (window_width-(window_width%block_size))/block_size;       //30 palikkaa
-const int y_blocks = (window_height-(window_height%block_size))/block_size;     //16,875
+const int y_blocks = (window_height-(window_height%block_size))/block_size;     //16, 875
 
 
 using namespace std;
@@ -55,11 +58,14 @@ int main(int argc, char *argv[])
     int edellinen_y = pelaaja_y;
     int edellinenValikkoX = -1;
     int edellinenValikkoY = -1;
+    int valittu = 1;
     map<SDL_Rect*,string> valikkoMappi;
     bool poistu = false;
     bool valikko = false;
     SDL_Event e;
+    vector<item*> tavarat;
 
+    //ikkunan luominen
     SDL_Window *win = SDL_CreateWindow("da Peli", 0, 0, window_width, window_height, SDL_WINDOW_SHOWN|SDL_WINDOW_RESIZABLE|SDL_WINDOW_INPUT_GRABBED|SDL_WINDOW_BORDERLESS);
     //jos ikkunan luominen ep‰onnistuu
     if (win == nullptr){
@@ -72,12 +78,15 @@ int main(int argc, char *argv[])
 
     //lataa kuvat
     SDL_Surface * taustaRuoho = lataaKuva("bmp/grass.bmp", false);
-    SDL_Surface * pelaaja = lataaKuva("bmp/player.bmp", true);
+    SDL_Surface * taustaSora = lataaKuva("bmp/ground.bmp", false);
     SDL_Surface * puu = lataaKuva("bmp/tree_S.bmp", true);
     SDL_Surface * kivi = lataaKuva("bmp/rock_S.bmp", true);
-    SDL_Surface * taustaSora = lataaKuva("bmp/ground.bmp", false);
+    SDL_Surface * pelaaja = lataaKuva("bmp/player.bmp", true);
     SDL_Surface * kirves = lataaKuva("bmp/axe.bmp", true);
+    SDL_Surface * hakku = lataaKuva("bmp/pick.bmp", true);
+    SDL_Surface * viikate = lataaKuva("bmp/scythe.bmp", true);
     SDL_Surface * UI = lataaKuva("bmp/UI.bmp", false);
+    SDL_Surface * valinta = lataaKuva("bmp/select.bmp", true);
 
 
     //luodaan vektori, jossa on kaikki k‰ytett‰v‰t kuvat
@@ -91,7 +100,7 @@ int main(int argc, char *argv[])
     pair<int, int> pari;
     map<pair<int,int>, vector<SDL_Surface*>> piirrettavat;
 
-    piirrettavat.insert(pair<pair<int,int>, vector<SDL_Surface*>>({-1,-1}, {UI}));
+    piirrettavat.insert(pair<pair<int,int>, vector<SDL_Surface*>>({-2,-2}, {UI}));
 
     //generoi mappi, t‰ll‰ hetkell‰ randomisoi mapin
     map<pair<int,int>, block> kartta = generateMap(x_blocks, y_blocks);
@@ -111,6 +120,12 @@ int main(int argc, char *argv[])
     piirraTausta(piirrettavat, ren);
     piirra(pelaaja, ren, pelaaja_x, pelaaja_y, block_size, block_size);
 
+    item axe("kirves", kirves);
+    item pick("hakku", hakku);
+    item scythe("viikate", viikate);
+    tavarat.push_back(&axe);
+    tavarat.push_back(&pick);
+    tavarat.push_back(&scythe);
 
     while(poistu != true){
 
@@ -174,8 +189,9 @@ int main(int argc, char *argv[])
                     valikko = true;
 
                     muutos = 1;
-
                 }
+
+                //vasen hiiren nappi eik‰ valikko ole aktiivisena
                 else if (SDL_GetMouseState(NULL, NULL) == SDL_BUTTON_LEFT && valikko == false){
                     //hakee hiiren koordinaatit
                     SDL_GetMouseState( &pelaaja_x, &pelaaja_y);
@@ -197,6 +213,7 @@ int main(int argc, char *argv[])
                         }
                     }
                 }
+
                 //jos valikko on aktiivisena ja klikataan vasemmalla, katsotaan valittiinko jokin toiminto
                 else if (SDL_GetMouseState(NULL, NULL) == SDL_BUTTON_LEFT && valikko == true){
                     int x;
@@ -222,6 +239,7 @@ int main(int argc, char *argv[])
                     muutos = 1;
                 }
             }
+
             //n‰pp‰imistˆn syˆtteet
             if( e.type == SDL_KEYDOWN)
             {
@@ -230,15 +248,37 @@ int main(int argc, char *argv[])
                     poistu = true;
                 }
                 //TODO: jos joku muu, kuin esc, mik‰ n‰pp‰n? ->else ->if-lauseet, ei "else if"
-                else if (state[SDL_SCANCODE_F]){
-                    piirra(kirves, ren, 3, window_height-53, 50, 50);
+                //priorisoi esc:n painamista
+                else{
+                    if (state[SDL_SCANCODE_1]){
+                        valittu = 1;
+                        muutos = 1;
+                    }
+                    else if (state[SDL_SCANCODE_2]){
+                        valittu = 2;
+                        muutos = 1;
+                    }
+                    else if (state[SDL_SCANCODE_3]){
+                        valittu = 3;
+                        muutos = 1;
+                    }
+                    else if (state[SDL_SCANCODE_4]){
+                        valittu = 4;
+                        muutos = 1;
+                    }
                 }
             }
         }
         //itemin piirt‰misen kokeilu
         //TODO: m‰‰rit‰ sloteille pysyv‰t koordinaatit, jotka tallennetaan vektoriin
         if (muutos == 1){
-            piirra(kirves, ren, 3, window_height-53, 50, 50);
+            int laskuri{0};
+            piirraTausta(piirrettavat, ren, {-2, -2});
+            piirra(valinta, ren, frame_size*(valittu-1)+(valittu), window_height-(frame_size+1), frame_size, frame_size);
+            for(auto esine : tavarat){
+                piirra(esine->getImage(), ren, (laskuri*54)+4, window_height-53, item_size, item_size);
+                laskuri++;
+            }
             SDL_RenderPresent(ren);
         }
 
@@ -250,8 +290,22 @@ int main(int argc, char *argv[])
 
     }
 
-    //odotus-funktio
-
+    //poistetaan tavarat muistista
+    for(auto tavara : tavarat){
+        try{
+            if(tavara == NULL){throw -1;}
+            else{
+                delete tavara;
+            }
+        }
+        catch(int e){
+            if(e == -1){
+                //tavara on jo poistettu. hiljennet‰‰n virhe.
+            }
+        }
+    }
+    tavarat.clear();
+    kartta.clear();
 
     TTF_CloseFont(font);
     SDL_FreeSurface(teksti);
@@ -262,6 +316,7 @@ int main(int argc, char *argv[])
     SDL_FreeSurface(puu);
     SDL_FreeSurface(UI);
     SDL_FreeSurface(kirves);
+    SDL_FreeSurface(valinta);
     SDL_DestroyRenderer(ren);
     SDL_DestroyWindow(win);
     TTF_Quit();
