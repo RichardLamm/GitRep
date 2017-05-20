@@ -79,14 +79,18 @@ int main(int argc, char *argv[])
     //lataa kuvat
     SDL_Surface * taustaRuoho = lataaKuva("bmp/grass.bmp", false);
     SDL_Surface * taustaSora = lataaKuva("bmp/ground.bmp", false);
+    SDL_Surface * vesi = lataaKuva("bmp/water.bmp", false);
     SDL_Surface * puu = lataaKuva("bmp/tree_S.bmp", true);
     SDL_Surface * kivi = lataaKuva("bmp/rock_S.bmp", true);
+
     SDL_Surface * pelaaja = lataaKuva("bmp/player.bmp", true);
     SDL_Surface * kirves = lataaKuva("bmp/axe.bmp", true);
     SDL_Surface * hakku = lataaKuva("bmp/pick.bmp", true);
     SDL_Surface * viikate = lataaKuva("bmp/scythe.bmp", true);
+
     SDL_Surface * UI = lataaKuva("bmp/UI.bmp", false);
     SDL_Surface * valinta = lataaKuva("bmp/select.bmp", true);
+
 
 
     //luodaan vektori, jossa on kaikki käytettävät kuvat
@@ -96,6 +100,7 @@ int main(int argc, char *argv[])
     kuvat.push_back(pelaaja);
     kuvat.push_back(puu);
     kuvat.push_back(kivi);
+    kuvat.push_back(vesi);
 
     pair<int, int> pari;
     map<pair<int,int>, vector<SDL_Surface*>> piirrettavat;
@@ -274,9 +279,9 @@ int main(int argc, char *argv[])
         if (muutos == 1){
             int laskuri{0};
             piirraTausta(piirrettavat, ren, {-2, -2});
-            piirra(valinta, ren, frame_size*(valittu-1)+(valittu), window_height-(frame_size+1), frame_size, frame_size);
+            piirra(valinta, ren, frame_size*(valittu-1)+(valittu+93), window_height-(frame_size+1), frame_size, frame_size);
             for(auto esine : tavarat){
-                piirra(esine->getImage(), ren, (laskuri*54)+4, window_height-53, item_size, item_size);
+                piirra(esine->getImage(), ren, (laskuri*54)+95, window_height-53, item_size, item_size);
                 laskuri++;
             }
             SDL_RenderPresent(ren);
@@ -310,13 +315,19 @@ int main(int argc, char *argv[])
     TTF_CloseFont(font);
     SDL_FreeSurface(teksti);
     SDL_FreeSurface(pelaaja);
+
     SDL_FreeSurface(taustaRuoho);
     SDL_FreeSurface(taustaSora);
     SDL_FreeSurface(kivi);
     SDL_FreeSurface(puu);
+    SDL_FreeSurface(vesi);
+
     SDL_FreeSurface(UI);
     SDL_FreeSurface(kirves);
+    SDL_FreeSurface(hakku);
+    SDL_FreeSurface(viikate);
     SDL_FreeSurface(valinta);
+
     SDL_DestroyRenderer(ren);
     SDL_DestroyWindow(win);
     TTF_Quit();
