@@ -5,10 +5,13 @@
 #include <stdlib.h>
 
 
-const int Tiles = 4;
+const int Tiles = 5;
 
+//kartan generointi
 std::map<std::pair<int,int>, block> generateMap(int width, int height)
 {
+    //TODO: palikoiden arvonnalle painotus
+
     //alustetaan randomisaatio
     srand(time(NULL));
     std::map<std::pair<int,int>, block> kartta;
@@ -21,6 +24,7 @@ std::map<std::pair<int,int>, block> generateMap(int width, int height)
     }
     //vektoriin karsitaan vain k‰ytˆss‰ olevat laatat arvontaa varten
     vector<int> arvottavat;
+    int arpa{0};
 
     //k‰yd‰‰n kaikki k‰ytett‰v‰t koordinaatit l‰pi ja luodaan niille palikka
 
@@ -28,10 +32,21 @@ std::map<std::pair<int,int>, block> generateMap(int width, int height)
     for (int j = 0; j<height; j++){
         //k‰yd‰‰n l‰pi vaakasuunta
         for (int i = 0; i<width; i++){
+            //palautetaan kaikki laatat arvottavien joukkoon
             arvottavat = laatat;
+            //nollataan rajoitteet
             rajotteet.clear();
-            if ( i-1 >= 0 ){rajotteet = kartta.at({i-1, j}).getLimits();}
-            if ( j-1 >= 0 ){rajotteet = kartta.at({i, j-1}).getLimits();}
+            //haetaan uudet rajoitteet, jos sellaisia on
+            if ( i-1 >= 0 ){
+                for(auto iRajoite : kartta.at({i-1, j}).getLimits()){
+                    rajotteet.push_back(iRajoite);
+                }
+            }
+            if ( j-1 >= 0 ){
+                for(auto jRajoite : kartta.at({i, j-j}).getLimits()){
+                    rajotteet.push_back(jRajoite);
+                }
+            }
             //k‰yd‰‰n l‰pi rajoitteet
             for (unsigned int k{0}; k<rajotteet.size(); k++){
                 //k‰yd‰‰n l‰pi k‰ytett‰v‰t laatat
@@ -45,7 +60,16 @@ std::map<std::pair<int,int>, block> generateMap(int width, int height)
                 }
             }
             //j‰ljell‰ on vain sallitut laatat ja arvotaan niist‰ jokin
-            int arpa = rand() % arvottavat.size();
+
+            //est‰‰ tilanteet, joissa j‰‰d‰‰n jumiin kartan luonnissa.
+            //lopullinen ratkaisu luoda tarpeeksi laattoja, ett‰ saadaan j‰rkev‰ generointi luonnostaan.
+            if(arvottavat.size() == 0){
+                arvottavat = laatat;
+                arpa = 2;
+            }
+            else{
+                arpa = rand() % arvottavat.size();
+            }
             //luodaan palikka koordinaatti id:ll‰ ja arvotulla tyypill‰
             block loota (i, j, arvottavat.at(arpa) );
             //lis‰t‰‰n luotu palikka karttaan

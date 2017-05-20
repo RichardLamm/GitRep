@@ -32,22 +32,31 @@ void piirra(SDL_Surface *kuvaT, SDL_Renderer *renT, int x, int y, int w, int h){
 
 vector<SDL_Surface*> maaritaPiirrettavat(int tyyppi, vector<SDL_Surface*> kuvat)
 {
-    enum {ruoho, sora, pelaaja, puu, kivi};
+    enum {ruoho, sora, pelaaja, puu, kivi, vesi};
     vector<SDL_Surface*> palautettava;
     switch(tyyppi)
     {
+    //ruohikko
     case 0:
         palautettava = {kuvat.at(ruoho)};
         break;
+    //sora
     case 1:
         palautettava = {kuvat.at(sora)};
         break;
+    //puu
     case 2:
         palautettava = {kuvat.at(ruoho), kuvat.at(puu)};
         break;
+    //kivi
     case 3:
         palautettava = {kuvat.at(sora), kuvat.at(kivi)};
         break;
+    //vesi
+    case 4:
+        palautettava = {kuvat.at(vesi)};
+        break;
+
     default:
         cout << "virheellinen arvo kuvien määrittelyssä" << endl;
         break;
