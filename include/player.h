@@ -2,7 +2,6 @@
 #define PLAYER_H
 
 #include "item.h"
-#include "resurssi.h"
 #include <map>
 
 using namespace std;

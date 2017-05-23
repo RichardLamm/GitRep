@@ -7,13 +7,11 @@
 
 /*TODO:
     -valikko
-    -yleinen päällepiirto -> ei jää "haamukuvia"
-    -piirtojärjestys mappiin (depth) ja uudenlainen piirtofunktio?
     -oikeasti jonkinlaista interactaamista palikoiden kanssa
-    -kartan laajempi generoiminen
     -painotetut blockien generoinnit
-    -pelaajan modelin muuttaminen
     -lisää kohteita maastoon
+    -resurssien kerääminen ja säilöminen
+    -itemien rakentaminen
 */
 
 //constit
