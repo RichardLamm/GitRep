@@ -2,6 +2,7 @@
 #include "block.h"
 #include "draw.h"
 #include "item.h"
+#include "player.h"
 
 
 /*TODO:
@@ -255,6 +256,8 @@ int main(int argc, char *argv[])
                 //TODO: jos joku muu, kuin esc, mikä näppän? ->else ->if-lauseet, ei "else if"
                 //priorisoi esc:n painamista
                 else{
+
+                    //itemit
                     if (state[SDL_SCANCODE_1]){
                         valittu = 1;
                         muutos = 1;
@@ -271,11 +274,21 @@ int main(int argc, char *argv[])
                         valittu = 4;
                         muutos = 1;
                     }
+
+                    //kartta
+                    else if(state[SDL_SCANCODE_M]){
+                        //kartan määrittely tänne
+                    }
+
+                    //toiminto valitulla työkalulla
+                    else if(state[SDL_SCANCODE_SPACE]){
+                        //toiminto laatalla valitulla työkalulla
+                    }
                 }
             }
         }
-        //itemin piirtämisen kokeilu
-        //TODO: määritä sloteille pysyvät koordinaatit, jotka tallennetaan vektoriin
+
+        //itemin piirtäminen
         if (muutos == 1){
             int laskuri{0};
             piirraTausta(piirrettavat, ren, {-2, -2});
