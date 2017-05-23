@@ -36,15 +36,23 @@ std::map<std::pair<int,int>, block> generateMap(int width, int height)
             arvottavat = laatat;
             //nollataan rajoitteet
             rajotteet.clear();
+
+            std::cerr << i << "," << j << " rajoitteena olivat: ";
             //haetaan uudet rajoitteet, jos sellaisia on
+            //rajoite vasemmalta
             if ( i-1 >= 0 ){
+                std::cerr << "i-puolella: ";
                 for(auto iRajoite : kartta.at({i-1, j}).getLimits()){
                     rajotteet.push_back(iRajoite);
+                    std::cerr << iRajoite << ", ";
                 }
             }
+            //rajoite ylhäältä
             if ( j-1 >= 0 ){
-                for(auto jRajoite : kartta.at({i, j-j}).getLimits()){
+                std::cerr << "j-puolella: ";
+                for(auto jRajoite : kartta.at({i, j-1}).getLimits()){
                     rajotteet.push_back(jRajoite);
+                    std::cerr << jRajoite << ", ";
                 }
             }
             //käydään läpi rajoitteet
@@ -65,13 +73,19 @@ std::map<std::pair<int,int>, block> generateMap(int width, int height)
             //lopullinen ratkaisu luoda tarpeeksi laattoja, että saadaan järkevä generointi luonnostaan.
             if(arvottavat.size() == 0){
                 arvottavat = laatat;
-                arpa = 2;
+                arpa = 1;
+
             }
             else{
                 arpa = rand() % arvottavat.size();
             }
             //luodaan palikka koordinaatti id:llä ja arvotulla tyypillä
             block loota (i, j, arvottavat.at(arpa) );
+
+
+
+            std::cerr << "valittiin " << arvottavat.at(arpa) << std::endl;
+
             //lisätään luotu palikka karttaan
             kartta.insert(std::pair<std::pair<int, int>, block>({i,j}, loota));
         }

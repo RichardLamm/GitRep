@@ -1,5 +1,7 @@
 #include "block.h"
 
+#include <iostream>
+
 //m‰‰rittelee luotavan palikan
 block::block(int x, int y, int tempType){
     enum {ruoho, sora, puu, kivi, vesi};
@@ -37,6 +39,7 @@ block::block(int x, int y, int tempType){
     case 4:
         limits_.clear();
         limits_ = {ruoho, puu};
+        break;
 
     default:
         limits_.clear();
