@@ -48,7 +48,7 @@ int main(int argc, char *argv[])
     //TTF_SetFontOutline(font, 1);
     int FontX;
     int FontY;
-    SDL_Surface* teksti;
+    vector<SDL_Surface*> tekstit;
 
     int pelaaja_x = 896;
     int pelaaja_y = 448;
@@ -58,11 +58,13 @@ int main(int argc, char *argv[])
     int edellinenValikkoX = -1;
     int edellinenValikkoY = -1;
     int valittu = 1;
-    map<SDL_Rect*,string> valikkoMappi;
+    map<SDL_Rect*, int> valikkoMappi;
     bool poistu = false;
     bool valikko = false;
     SDL_Event e;
     vector<item*> tavarat;
+    player* pelaaja_ptr = new player;
+
 
     //ikkunan luominen
     SDL_Window *win = SDL_CreateWindow("da Peli", 0, 0, window_width, window_height, SDL_WINDOW_SHOWN|SDL_WINDOW_RESIZABLE|SDL_WINDOW_INPUT_GRABBED|SDL_WINDOW_BORDERLESS);
@@ -89,8 +91,15 @@ int main(int argc, char *argv[])
 
     SDL_Surface * UI = lataaKuva("bmp/UI.bmp", false);
     SDL_Surface * valinta = lataaKuva("bmp/select.bmp", true);
+    SDL_Surface * ruoho_resurssi = lataaKuva("bmp/grass_Res.bmp", true);
+    SDL_Surface * puu_resurssi = lataaKuva("bmp/log_Res.bmp", true);
+    SDL_Surface * kivi_resurssi = lataaKuva("bmp/rock_Res.bmp", true);
+    SDL_Surface * vesi_resurssi = lataaKuva("bmp/water_Res.bmp", true);
 
-
+    pelaaja_ptr->initResource(0, "ruoho", ruoho_resurssi);
+    pelaaja_ptr->initResource(1, "puu", puu_resurssi);
+    pelaaja_ptr->initResource(2, "kivi", kivi_resurssi);
+    pelaaja_ptr->initResource(3, "vesi", vesi_resurssi);
 
     //luodaan vektori, jossa on kaikki käytettävät kuvat
     vector<SDL_Surface*> kuvat;
@@ -143,6 +152,7 @@ int main(int argc, char *argv[])
                 //jos painettu hiiren nappi ei ole vasen
                 if(SDL_GetMouseState(NULL, NULL) != SDL_BUTTON_LEFT){
                     valikkoMappi.clear();
+                    tekstit.clear();
                     int x;
                     int y;
                     SDL_GetMouseState( &x, &y);
@@ -166,28 +176,36 @@ int main(int argc, char *argv[])
                     //paikka normalisoituna palikoille, eli ID muoto
                     pair<int, int> kohta{(x-x%block_size)/block_size,(y-y%block_size)/block_size};
                     //haetaan palikan toiminnot ID:llä
-                    options = kartta.at(kohta).getActions();
+                    options = kartta.at(kohta).getActionsString();
+                    vector<int> optionsID = kartta.at(kohta).getActionsID();
                     for (unsigned int i{0}; i < options.size(); i++){
-                        loota.y = y-(y%block_size) + 15*i + 10;
-                        sisaLoota.y = y-(y%block_size) + 15*i + 11;
+                        //peitä edellinen valikko
                         if (edellinenValikkoX != -1 && edellinenValikkoY != -1){
                             piirraTausta(piirrettavat, ren, {edellinenValikkoX, edellinenValikkoY});
+                            //jos valikko ei ollut reunimmaisessa palikassa, peitetään myös viereinen laatta varmuuden vuoksi
                             if( edellinenValikkoX != x_blocks ){piirraTausta(piirrettavat, ren, {edellinenValikkoX+1, edellinenValikkoY});}
-                            if (edellinen_x != -1 && edellinen_y != -1){piirra(pelaaja, ren, edellinen_x, edellinen_y, 64, 64);}
+                            //piirretään pelaaja päälle
+                            if( edellinen_x != -1 && edellinen_y != -1){piirra(pelaaja, ren, edellinen_x, edellinen_y, 64, 64);}
                         }
-
-                        valikkoMappi.insert(pair<SDL_Rect*, string>(&loota, options.at(i).substr()) );
+                        valikkoMappi.insert(pair<SDL_Rect*, int>(&loota, optionsID.at(i)) );
+                        tekstit.push_back(TTF_RenderText_Solid(font, options[i].c_str(), tekstinVari));
+                        edellinenValikkoX = (x-x%block_size)/block_size;
+                        edellinenValikkoY = (y-y%block_size)/block_size;
+                    }
+                    int i = 0;
+                    //piirretään tekstilaatikot näytölle
+                    for(auto teksti : tekstit){
+                        loota.y = y-(y%block_size) + 16*i + 10;
+                        sisaLoota.y = y-(y%block_size) + 16*i + 11;
                         SDL_RenderDrawRect(ren, &loota);
                         //muutetaan väri valkoiseksi
                         SDL_SetRenderDrawColor(ren, 0xFF, 0xFF, 0xFF, 0xFF);
                         SDL_RenderFillRect(ren, &sisaLoota);
                         //muutetaan väri takaisin mustaksi
                         SDL_SetRenderDrawColor(ren, 0x00, 0x00, 0x00, 0xFF);
-                        teksti = TTF_RenderText_Solid(font, options[i].c_str(), tekstinVari);
                         TTF_SizeUTF8(font, options[i].c_str(), &FontX, &FontY);
-                        piirra(teksti, ren, x-(x%block_size)+(50-FontX/2) + 10, y-(y%block_size) + 15*i + 10, FontX, FontY);
-                        edellinenValikkoX = (x-x%block_size)/block_size;
-                        edellinenValikkoY = (y-y%block_size)/block_size;
+                        piirra(teksti, ren, x-(x%block_size)+(50-FontX/2) + 10, y-(y%block_size) + 16*i + 10, FontX, FontY);
+                        i++;
                     }
                     //mene valikkotilaan, missä oikealla klikkauksella valitaan toiminto, eikä siirretä pelaajaa
                     valikko = true;
@@ -225,13 +243,23 @@ int main(int argc, char *argv[])
                     SDL_GetMouseState( &x, &y);
                     x = (x-x%block_size)/block_size;
                     y = (y-y%block_size)/block_size;
-                    map<SDL_Rect*, string>::iterator it = valikkoMappi.begin();
+                    map<SDL_Rect*, int>::iterator it = valikkoMappi.begin();
                     while (it != valikkoMappi.end()){
                         int vertausX = (it->first->x - it->first->x%block_size)/block_size;
                         int vertausY = (it->first->y - it->first->y%block_size)/block_size;
                         if((x == vertausX || x == vertausX+1) && y == vertausY ){
-                            string valinta = it->second;
-                            //funktio, jolle argumenttina string valinta ja joka prosessoi kyseisen valinnan
+                            //tehdään valittu toiminto laatalla
+                            kartta.at({vertausX, vertausY}).doAction(pelaaja_ptr, it->second);
+
+                            if ( edellinen_x != -1 && edellinen_y != -1){
+                                piirraTausta(piirrettavat, ren, {edellinen_x/block_size, edellinen_y/block_size});
+                            }
+                            pelaaja_x = vertausX*block_size;
+                            pelaaja_y = vertausY*block_size;
+                            piirra(pelaaja, ren, pelaaja_x, pelaaja_y, block_size, block_size);
+                            muutos = 1;
+                            edellinen_x = pelaaja_x;
+                            edellinen_y = pelaaja_y;
                             break;
                         }
                         it++;
@@ -286,13 +314,19 @@ int main(int argc, char *argv[])
             }
         }
 
-        //itemin piirtäminen
+        //UI piirto
         if (muutos == 1){
             int laskuri{0};
             piirraTausta(piirrettavat, ren, {-2, -2});
             piirra(valinta, ren, frame_size*(valittu-1)+(valittu+93), window_height-(frame_size+1), frame_size, frame_size);
             for(auto esine : tavarat){
                 piirra(esine->getImage(), ren, (laskuri*54)+95, window_height-53, item_size, item_size);
+                laskuri++;
+            }
+            laskuri = 0;
+            for(auto resurssiKuva : pelaaja_ptr->drawResources()){
+                piirra(resurssiKuva.first, ren, (laskuri*100)+350, window_height-53, 40, 40);
+                piirra(resurssiKuva.second, ren, (laskuri*100)+400, window_height-53, 20, 20);
                 laskuri++;
             }
             SDL_RenderPresent(ren);
@@ -320,11 +354,25 @@ int main(int argc, char *argv[])
             }
         }
     }
+    for(auto teksti : tekstit){
+        try{
+            if(teksti == NULL){throw -1;}
+            else{
+                SDL_FreeSurface(teksti);
+            }
+        }
+        catch(int e){
+            if(e == -1){
+                //teksti on jo poistettu. hiljennetään virhe.
+            }
+        }
+    }
+    tekstit.clear();
     tavarat.clear();
     kartta.clear();
+    delete pelaaja_ptr;
 
     TTF_CloseFont(font);
-    SDL_FreeSurface(teksti);
     SDL_FreeSurface(pelaaja);
 
     SDL_FreeSurface(taustaRuoho);
@@ -338,6 +386,8 @@ int main(int argc, char *argv[])
     SDL_FreeSurface(hakku);
     SDL_FreeSurface(viikate);
     SDL_FreeSurface(valinta);
+    SDL_FreeSurface(ruoho_resurssi);
+    SDL_FreeSurface(puu_resurssi);
 
     SDL_DestroyRenderer(ren);
     SDL_DestroyWindow(win);
