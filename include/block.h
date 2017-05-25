@@ -5,6 +5,7 @@
 #include <SDL.h>
 #include <string>
 #include <vector>
+#include "player.h"
 
 using namespace std;
 
@@ -18,17 +19,22 @@ public:
     //toiminnat tietylle laattatyypille
     void SetActions(int);
     //palauttaa laatan toiminnat
-    vector<string> getActions();
+    vector<string> getActionsString();
+    //palauttaa toiminnan ID:n. nopeempi vertailu, kuin stringill‰
+    vector<int> getActionsID();
     //palauttaa laatan tyypin
     int getType();
     //palauttaa laatan rajoitteet
     vector<int> getLimits();
+    //tehd‰‰n palikassa toiminto
+    void doAction(player*, int);
 
 private:
     pair<int, int> ID_;
     int type_;
     vector<SDL_Surface*> kuvat_;
-    vector<string> actions_;
+    vector<string> actionsString_;
+    vector<int> actionsID_;
     vector<int> limits_;
     vector<int> surround_;
 };

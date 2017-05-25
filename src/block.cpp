@@ -55,8 +55,12 @@ vector<int> block::getLimits(){
     return limits_;
 }
 
-vector<string> block::getActions(){
-    return actions_;
+vector<string> block::getActionsString(){
+    return actionsString_;
+}
+
+vector<int> block::getActionsID(){
+    return actionsID_;
 }
 
 void block::SetImages(vector<SDL_Surface*> images){
@@ -64,22 +68,106 @@ void block::SetImages(vector<SDL_Surface*> images){
 }
 
 void block::SetActions(int type){
+    /*
+    toiminnot:
+        0 = tutki
+        1 = kerää ruohoa
+        2 = hakkaa puuta
+        3 = hakkaa kivestä
+        4 = ota vettä
+
+    laatat:
+        0 = ruoho
+        1 = sora
+        2 = puu
+        3 = kivi
+        4 = vesi
+    */
     switch(type){
+    case 0:
+        actionsString_.clear();
+        actionsString_.push_back("kerää ruohoa");
+        actionsString_.push_back("tutki");
+        actionsID_.clear();
+        actionsID_.push_back(1);
+        actionsID_.push_back(0);
+        break;
     case 2:
-        actions_.clear();
-        actions_.push_back("hakkaa puuta");
+        actionsString_.clear();
+        actionsString_.push_back("hakkaa puuta");
+        actionsString_.push_back("tutki");
+        actionsID_.clear();
+        actionsID_.push_back(2);
+        actionsID_.push_back(0);
         break;
     case 3:
-        actions_.clear();
-        actions_.push_back("hakkaa kivestä");
+        actionsString_.clear();
+        actionsString_.push_back("hakkaa kivestä");
+        actionsString_.push_back("tutki");
+        actionsID_.clear();
+        actionsID_.push_back(3);
+        actionsID_.push_back(0);
         break;
     case 4:
-        actions_.clear();
-        actions_.push_back("ota vettä");
+        actionsString_.clear();
+        actionsString_.push_back("ota vettä");
+        actionsString_.push_back("tutki");
+        actionsID_.clear();
+        actionsID_.push_back(4);
+        actionsID_.push_back(0);
         break;
     default:
-        actions_.clear();
-        actions_.push_back("tutki");
+        actionsString_.clear();
+        actionsString_.push_back("tutki");
+        actionsID_.clear();
+        actionsID_.push_back(0);
+        break;
+    }
+}
+
+void block::doAction(player* pelaaja, int action){
+    /*
+    toiminnot:
+        0 = tutki
+        1 = kerää ruohoa
+        2 = hakkaa puuta
+        3 = hakkaa kivestä
+        4 = ota vettä
+
+    laatat:
+        0 = ruoho
+        1 = sora
+        2 = puu
+        3 = kivi
+        4 = vesi
+    */
+    switch(action){
+    case 0:
+        //anna pelaajalle jotakin infoa laatasta
+        break;
+    case 1:
+        if(type_ == 0){
+            pelaaja->addResource(0, 5, "Ruoho");
+        }
+        break;
+    case 2:
+        if(type_ == 2){
+            pelaaja->addResource(1, 10, "puu");
+        }
+        break;
+    case 3:
+       if(type_ == 3){
+            pelaaja->addResource(2, 5, "kivi");
+        }
+        break;
+    case 4:
+        if(type_ == 4){
+            pelaaja->addResource(3, 1, "vesi");
+        }
+        break;
+    default:
+        //jotakin pielessä
+        std::cerr << "toiminna suorittamisessa meni jokin pieleen" << std::endl;
         break;
     }
 }
