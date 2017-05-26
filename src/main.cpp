@@ -61,6 +61,9 @@ int main(int argc, char *argv[])
     map<SDL_Rect*, int> valikkoMappi;
     bool poistu = false;
     bool valikko = false;
+    bool mapActive = false;
+    bool pauseActive = false;
+    bool craftActive = false;
     SDL_Event e;
     vector<item*> tavarat;
     player* pelaaja_ptr = new player;
@@ -68,6 +71,11 @@ int main(int argc, char *argv[])
 
     //ikkunan luominen
     SDL_Window *win = SDL_CreateWindow("da Peli", 0, 0, window_width, window_height, SDL_WINDOW_SHOWN|SDL_WINDOW_RESIZABLE|SDL_WINDOW_INPUT_GRABBED|SDL_WINDOW_BORDERLESS);
+    SDL_Window *mapWin = SDL_CreateWindow("kartta", block_size*2, block_size*2, window_width-(block_size*4), window_height-(block_size*4), SDL_WINDOW_HIDDEN|SDL_WINDOW_RESIZABLE|SDL_WINDOW_BORDERLESS);
+    SDL_Window *pauseWin = SDL_CreateWindow("pause", (window_width/2)-block_size*3, (window_height/2)-(2*block_size), block_size*6, block_size*2, SDL_WINDOW_HIDDEN|SDL_WINDOW_RESIZABLE|SDL_WINDOW_BORDERLESS);
+    SDL_Window *craftWin = SDL_CreateWindow("väkerrys", block_size*2, block_size*2, window_width-(block_size*4), window_height-(block_size*4), SDL_WINDOW_HIDDEN|SDL_WINDOW_RESIZABLE|SDL_WINDOW_BORDERLESS);
+
+
     //jos ikkunan luominen epäonnistuu
     if (win == nullptr){
         cout << "SDL_CreateWindow Error: " << SDL_GetError() << endl;
@@ -76,6 +84,9 @@ int main(int argc, char *argv[])
     }
 
     SDL_Renderer *ren = SDL_CreateRenderer(win, -1, SDL_RENDERER_ACCELERATED);
+    SDL_Renderer *mapRen = SDL_CreateRenderer(mapWin, -1, SDL_RENDERER_ACCELERATED);
+    SDL_Renderer *pauseRen = SDL_CreateRenderer(pauseWin, -1, SDL_RENDERER_ACCELERATED);
+    SDL_Renderer *craftRen = SDL_CreateRenderer(craftWin, -1, SDL_RENDERER_ACCELERATED);
 
     //lataa kuvat
     SDL_Surface * taustaRuoho = lataaKuva("bmp/grass.bmp", false);
@@ -96,6 +107,10 @@ int main(int argc, char *argv[])
     SDL_Surface * puu_resurssi = lataaKuva("bmp/log_Res.bmp", true);
     SDL_Surface * kivi_resurssi = lataaKuva("bmp/rock_Res.bmp", true);
     SDL_Surface * vesi_resurssi = lataaKuva("bmp/water_Res.bmp", true);
+
+    tekstinVari.r = 150;
+    SDL_Surface * pauseText = TTF_RenderText_Solid(font, "Quit? (Y/N)", tekstinVari);
+    tekstinVari.r = 0;
 
     pelaaja_ptr->initResource(0, "ruoho", ruoho_resurssi);
     pelaaja_ptr->initResource(1, "puu", puu_resurssi);
@@ -280,7 +295,23 @@ int main(int argc, char *argv[])
             {
                 const Uint8 *state = SDL_GetKeyboardState(NULL);
                 if( state[SDL_SCANCODE_ESCAPE]){
+                    if(pauseActive == false){
+                        SDL_ShowWindow(pauseWin);
+                        piirra(pauseText, pauseRen, block_size, block_size/2, block_size*4, block_size);
+                        SDL_RenderPresent(pauseRen);
+                        pauseActive = true;
+                    }
+                    else if(pauseActive == true){
+                        SDL_HideWindow(pauseWin);
+                        pauseActive = false;
+                    }
+                }
+                if( state[SDL_SCANCODE_Y] && pauseActive == true){
                     poistu = true;
+                }
+                else if(state[SDL_SCANCODE_N] && pauseActive == true){
+                    SDL_HideWindow(pauseWin);
+                    pauseActive = false;
                 }
                 //TODO: jos joku muu, kuin esc, mikä näppän? ->else ->if-lauseet, ei "else if"
                 //priorisoi esc:n painamista
@@ -307,6 +338,14 @@ int main(int argc, char *argv[])
                     //kartta
                     else if(state[SDL_SCANCODE_M]){
                         //kartan määrittely tänne
+                        if(mapActive == false){
+                            SDL_ShowWindow(mapWin);
+                            mapActive = true;
+                        }
+                        else if(mapActive == true){
+                            SDL_HideWindow(mapWin);
+                            mapActive = false;
+                        }
                     }
 
                     //toiminto valitulla työkalulla
@@ -419,9 +458,16 @@ int main(int argc, char *argv[])
     SDL_FreeSurface(valinta);
     SDL_FreeSurface(ruoho_resurssi);
     SDL_FreeSurface(puu_resurssi);
+    SDL_FreeSurface(pauseText);
 
     SDL_DestroyRenderer(ren);
+    SDL_DestroyRenderer(pauseRen);
+    SDL_DestroyRenderer(craftRen);
+    SDL_DestroyRenderer(mapRen);
     SDL_DestroyWindow(win);
+    SDL_DestroyWindow(mapWin);
+    SDL_DestroyWindow(craftWin);
+    SDL_DestroyWindow(pauseWin);
     TTF_Quit();
     SDL_Quit();
     return 0;
