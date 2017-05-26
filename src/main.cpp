@@ -88,6 +88,7 @@ int main(int argc, char *argv[])
     SDL_Surface * kirves = lataaKuva("bmp/axe.bmp", true);
     SDL_Surface * hakku = lataaKuva("bmp/pick.bmp", true);
     SDL_Surface * viikate = lataaKuva("bmp/scythe.bmp", true);
+    SDL_Surface * ampari = lataaKuva("bmp/bucket.bmp", true);
 
     SDL_Surface * UI = lataaKuva("bmp/UI.bmp", false);
     SDL_Surface * valinta = lataaKuva("bmp/select.bmp", true);
@@ -136,9 +137,11 @@ int main(int argc, char *argv[])
     item axe("kirves", kirves);
     item pick("hakku", hakku);
     item scythe("viikate", viikate);
+    item bucket("ämpäri", ampari);
     tavarat.push_back(&axe);
     tavarat.push_back(&pick);
     tavarat.push_back(&scythe);
+    tavarat.push_back(&bucket);
 
     while(poistu != true){
 
@@ -309,6 +312,34 @@ int main(int argc, char *argv[])
                     //toiminto valitulla työkalulla
                     else if(state[SDL_SCANCODE_SPACE]){
                         //toiminto laatalla valitulla työkalulla
+                        //kirves (jos tehty)
+                        if(valittu == 1){
+                            //jos ollaan puu laatalla
+                            if(kartta.at({pelaaja_x/block_size, pelaaja_y/block_size}).getType() == 2){
+                                kartta.at({pelaaja_x/block_size, pelaaja_y/block_size}).doAction(pelaaja_ptr, 2);
+                            }
+                        }
+                        //hakku
+                        else if(valittu == 2){
+                            //jos ollaan kivi laatalla
+                            if(kartta.at({pelaaja_x/block_size, pelaaja_y/block_size}).getType() == 3){
+                                kartta.at({pelaaja_x/block_size, pelaaja_y/block_size}).doAction(pelaaja_ptr, 3);
+                            }
+                        }
+                        //viikate
+                        else if(valittu == 3){
+                            //jos ollaan ruoho laatalla
+                            if(kartta.at({pelaaja_x/block_size, pelaaja_y/block_size}).getType() == 0){
+                                kartta.at({pelaaja_x/block_size, pelaaja_y/block_size}).doAction(pelaaja_ptr, 1);
+                            }
+                        }
+                        else if(valittu == 4){
+                            //jos ollaan ruoho laatalla
+                            if(kartta.at({pelaaja_x/block_size, pelaaja_y/block_size}).getType() == 4){
+                                kartta.at({pelaaja_x/block_size, pelaaja_y/block_size}).doAction(pelaaja_ptr, 4);
+                            }
+                        }
+                        muutos = 1;
                     }
                 }
             }
@@ -320,7 +351,7 @@ int main(int argc, char *argv[])
             piirraTausta(piirrettavat, ren, {-2, -2});
             piirra(valinta, ren, frame_size*(valittu-1)+(valittu+93), window_height-(frame_size+1), frame_size, frame_size);
             for(auto esine : tavarat){
-                piirra(esine->getImage(), ren, (laskuri*54)+95, window_height-53, item_size, item_size);
+                piirra(esine->getImage(), ren, (laskuri*55)+96, window_height-53, item_size, item_size);
                 laskuri++;
             }
             laskuri = 0;
