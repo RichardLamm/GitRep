@@ -47,6 +47,16 @@ block::block(int x, int y, int tempType){
     }
 }
 
+block::~block(){
+    ID_ = {0,0};
+    type_ = 0;
+    kuvat_.clear();
+    actionsID_.clear();
+    actionsString_.clear();
+    limits_.clear();
+    surround_.clear();
+}
+
 int block::getType(){
     return type_;
 }

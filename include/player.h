@@ -15,12 +15,17 @@ class player
     public:
         player();
         virtual ~player();
+        //annetaan pelaajan k‰yttˆˆn tavara
         void setItem(item*);
+        //alustetaan k‰ytett‰v‰t resurssit
         void initResource(int ID, string name, SDL_Surface* kuva);
+        //palauttaa kysytyn resurssin varastoidun m‰‰r‰n
         int getResourceQuantity(int ID);
+        //lis‰‰ tietty‰ resurssia annetun m‰‰r‰n
         void addResource(int ID, int quantity, string name="");
         //palauttaa true, jos onnistutaan ja muutoin palauttaa false
         bool useResource(int ID, int quantity);
+        //piirt‰‰ resurssit UI:hin
         vector<pair<SDL_Surface*, SDL_Surface*>> drawResources();
 
     protected:
