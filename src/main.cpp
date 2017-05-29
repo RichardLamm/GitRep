@@ -54,8 +54,6 @@ int main(int argc, char *argv[])
     int muutos = 1;
     int edellinen_x = pelaaja_x;
     int edellinen_y = pelaaja_y;
-    int edellinenValikkoX = -1;
-    int edellinenValikkoY = -1;
     int valittu = 1;
     int x;
     int y;
@@ -209,6 +207,7 @@ int main(int argc, char *argv[])
             //näppäimistön syötteet
             if( e.type == SDL_KEYDOWN)
             {
+                //luetaan syöte näppäimistöltä
                 const Uint8 *state = SDL_GetKeyboardState(NULL);
                 if( state[SDL_SCANCODE_ESCAPE]){
                     if(pauseActive == false){
@@ -229,7 +228,6 @@ int main(int argc, char *argv[])
                     SDL_HideWindow(pauseWin);
                     pauseActive = false;
                 }
-                //TODO: jos joku muu, kuin esc, mikä näppän? ->else ->if-lauseet, ei "else if"
                 //priorisoi esc:n painamista
                 else{
 
@@ -264,6 +262,19 @@ int main(int argc, char *argv[])
                         }
                     }
 
+                    //research ja crafting (ehkä jollekin toiselle napille bindaus?)
+                    else if(state[SDL_SCANCODE_C]){
+                        //kartan määrittely tänne
+                        if(craftActive == false){
+                            SDL_ShowWindow(craftWin);
+                            craftActive = true;
+                        }
+                        else if(craftActive == true){
+                            SDL_HideWindow(craftWin);
+                            craftActive = false;
+                        }
+                    }
+
                     //toiminto valitulla työkalulla
                     else if(state[SDL_SCANCODE_SPACE]){
                         //toiminto laatalla valitulla työkalulla
@@ -288,8 +299,9 @@ int main(int argc, char *argv[])
                                 kartta.at({pelaaja_x/block_size, pelaaja_y/block_size}).doAction(pelaaja_ptr, 1);
                             }
                         }
+                        //ämpäri
                         else if(valittu == 4){
-                            //jos ollaan ruoho laatalla
+                            //jos ollaan vesi laatalla
                             if(kartta.at({pelaaja_x/block_size, pelaaja_y/block_size}).getType() == 4){
                                 kartta.at({pelaaja_x/block_size, pelaaja_y/block_size}).doAction(pelaaja_ptr, 4);
                             }

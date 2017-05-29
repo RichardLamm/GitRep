@@ -15,6 +15,8 @@ class block{
 public:
     //x, y, tyyppi
     block(int, int, int);
+    virtual ~block();
+    //asettaa laatalle kuvat
     void SetImages(vector<SDL_Surface*>);
     //toiminnat tietylle laattatyypille
     void SetActions(int);
@@ -36,6 +38,8 @@ private:
     vector<string> actionsString_;
     vector<int> actionsID_;
     vector<int> limits_;
+    //TODO: ympäröivät laatat tallennetaan muistiin
+    //tällä voidaan parantaa visuaalista toteutusta tai tehdä jotain muuta jännää ^^
     vector<int> surround_;
 };
 

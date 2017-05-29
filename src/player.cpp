@@ -9,7 +9,10 @@ player::player(){
 }
 
 player::~player(){
-
+    font_ = NULL;
+    tavarat_.clear();
+    taidot_.clear();
+    resurssit_.clear();
 }
 
 void player::setItem(item* tavara){

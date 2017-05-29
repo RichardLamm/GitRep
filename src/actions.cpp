@@ -13,11 +13,19 @@ actions::actions(const int* block_size_ptr, map<pair<int,int>, block>* kartta, m
 }
 
 actions::~actions(){
-
+    block_size_ptr_ = NULL;
+    kartta_ = NULL;
+    piirrettavat_ = NULL;
+    x_blocks_ = NULL;
+    y_blocks_ = NULL;
+    kuvat_ = NULL;
+    font_ = NULL;
+    tekstinVari_ = NULL;
 }
 
 void actions::showOptions(map<SDL_Rect*, int>* valikkoMappi, vector<SDL_Surface*>* tekstit, SDL_Renderer *ren,
                           int* x, int* y, int* edellinen_x, int* edellinen_y){
+    //tyhjennet‰‰n edelliset valikot pois muistista
     valikkoMappi->clear();
     tekstit->clear();
 
@@ -31,16 +39,20 @@ void actions::showOptions(map<SDL_Rect*, int>* valikkoMappi, vector<SDL_Surface*
     int FontY;
     std::vector<SDL_Rect*> sisaLootat;
     for (unsigned int i{0}; i < options.size(); i++){
+        //m‰‰ritell‰‰n ulkolaatikon mitat
         SDL_Rect* loota = new SDL_Rect;
-        SDL_Rect* sisaLoota = new SDL_Rect;
         loota->x = (*x)-((*x)%(*block_size_ptr_))+10;
         loota->h = 17;
         loota->w = 100;
+        loota->y = (*y)-((*y)%(*block_size_ptr_)) + 16*i + 10;
+
+        //m‰‰ritell‰‰n sis‰laatikon mitat
+        SDL_Rect* sisaLoota = new SDL_Rect;
         sisaLoota->x = (*x)-((*x)%(*block_size_ptr_))+11;
         sisaLoota->h = 15;
         sisaLoota->w = 98;
-        loota->y = (*y)-((*y)%(*block_size_ptr_)) + 16*i + 10;
         sisaLoota->y = (*y)-((*y)%(*block_size_ptr_)) + 16*i + 11;
+
         //peit‰ edellinen valikko
         if (edellinenValikkoX_ != -1 && edellinenValikkoY_ != -1){
             piirraTausta(*piirrettavat_, ren, {edellinenValikkoX_, edellinenValikkoY_});
@@ -49,14 +61,14 @@ void actions::showOptions(map<SDL_Rect*, int>* valikkoMappi, vector<SDL_Surface*
             //piirret‰‰n pelaaja p‰‰lle
             if( *edellinen_x != -1 && *edellinen_y != -1){piirra(kuvat_->at(2), ren, *edellinen_x, *edellinen_y, 64, 64);}
         }
+        //tallenetaan luotu valikkotekstilaatikko
         valikkoMappi->insert(pair<SDL_Rect*, int>(loota, optionsID.at(i)) );
         tekstit->push_back(TTF_RenderText_Solid(font_, options[i].c_str(), *tekstinVari_));
-        edellinenValikkoX_ = ((*x)-(*x)%(*block_size_ptr_))/(*block_size_ptr_);
-        edellinenValikkoY_ = ((*y)-(*y)%(*block_size_ptr_))/(*block_size_ptr_);
         sisaLootat.push_back(sisaLoota);
-
     }
+
     int j{0};
+    //piirret‰‰n luodut valikkotekstit n‰kyviin
     for(auto valinta : *valikkoMappi){
         SDL_RenderDrawRect(ren, valinta.first);
         //muutetaan v‰ri valkoiseksi
@@ -68,36 +80,40 @@ void actions::showOptions(map<SDL_Rect*, int>* valikkoMappi, vector<SDL_Surface*
         piirra(tekstit->at(j), ren, (*x)-((*x)%(*block_size_ptr_))+(50-FontX/2) + 10, (*y)-((*y)%(*block_size_ptr_)) + 16*j + 10, FontX, FontY);
         j++;
     }
-    std::cerr << " -> "  << valikkoMappi->size() <<std::endl;
+    //p‰ivitet‰‰n muistiin miss‰ viimeisin valikko on ollut
+    edellinenValikkoX_ = ((*x)-(*x)%(*block_size_ptr_))/(*block_size_ptr_);
+    edellinenValikkoY_ = ((*y)-(*y)%(*block_size_ptr_))/(*block_size_ptr_);
 }
 
 void actions::selectOption(map<SDL_Rect*, int>* valikkoMappi, player* pelaaja_ptr, map<pair<int,int>, block>* kartta, SDL_Renderer *ren,
                            int* x, int *y, int* edellinen_x, int* edellinen_y){
+    //k‰yd‰‰n l‰pi kaikki valikon kohteet
     for(auto valinta : *valikkoMappi){
         int vertausX = (valinta.first->x - valinta.first->x%(*block_size_ptr_))/(*block_size_ptr_);
         int vertausY = (valinta.first->y - valinta.first->y%(*block_size_ptr_))/(*block_size_ptr_);
 
-        std::cerr << *x << " - [" << valinta.first->x << ", " << valinta.first->x + valinta.first->w << "]" << std::endl;
-        std::cerr << *y << " - [" << valinta.first->y << ", " << valinta.first->y + valinta.first->h << "]" << std::endl;
-
+        //jos klikkaus on jonkin valikkotekstin kohdalla, tehd‰‰n sen valinnan toiminnat
         if( (*x >= valinta.first->x) && (*x <= (valinta.first->x + valinta.first->w)) &&
            (*y >= valinta.first->y) && (*y <= (valinta.first->y + valinta.first->h))){
             //tehd‰‰n valittu toiminto laatalla
             kartta->at({vertausX, vertausY}).doAction(pelaaja_ptr, valinta.second);
 
+            //siirret‰‰n pelaaja laattaan, miss‰ toiminto suoritetaan.
             if ( *edellinen_x != -1 && *edellinen_y != -1){
                 piirraTausta(*piirrettavat_, ren, {*edellinen_x/(*block_size_ptr_), *edellinen_y/(*block_size_ptr_)});
             }
             *x = *x-*x%(*block_size_ptr_);
             *y = *y-*y%(*block_size_ptr_);
-            piirra(kuvat_->at(2), ren, *x, *y, *block_size_ptr_, *block_size_ptr_);
             *edellinen_x = *x;
             *edellinen_y = *y;
             break;
         }
     }
+    //peit‰ valikko
     piirraTausta(*piirrettavat_, ren, {edellinenValikkoX_, edellinenValikkoY_});
+    //jos valikko on ollut kahdella laatalla
     if( edellinenValikkoX_ != *x_blocks_ ){piirraTausta(*piirrettavat_, ren, {edellinenValikkoX_+1, edellinenValikkoY_});}
+    //piirr‰ pelaaja paikalleen
     if (*edellinen_x != -1 && *edellinen_y != -1){piirra(kuvat_->at(2), ren, *edellinen_x, *edellinen_y, *block_size_ptr_, *block_size_ptr_);}
 }
 
@@ -108,9 +124,11 @@ void actions::movePlayer(SDL_Renderer *ren, int* pelaaja_x, int *pelaaja_y, int*
 
     //ei piirret‰ uudelleen, jos paikka ei ole muuttunut
     if(*pelaaja_x != *edellinen_x || *pelaaja_y != *edellinen_y){
+        //peitet‰‰n pelaajan haamukuva
         if ( *edellinen_x != -1 && *edellinen_y != -1){
             piirraTausta(*piirrettavat_, ren, {*edellinen_x/(*block_size_ptr_), *edellinen_y/(*block_size_ptr_)});
         }
+        //piirret‰‰n pelaaja uuteen paikkaan ja p‰ivitet‰‰n pelaajan koordinaatit muistiin
         piirra(kuvat_->at(2), ren, *pelaaja_x, *pelaaja_y, *block_size_ptr_, *block_size_ptr_);
         *edellinen_x = *pelaaja_x;
         *edellinen_y = *pelaaja_y;
