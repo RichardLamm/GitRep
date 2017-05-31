@@ -1,7 +1,7 @@
 #include "actions.h"
 
-actions::actions(const int* block_size_ptr, map<pair<int,int>, block>* kartta, map<pair<int,int>, vector<SDL_Surface*>>* piirrettavat,
-                 const int* x_blocks, const int* y_blocks, vector<SDL_Surface*>* kuvat, TTF_Font* font, SDL_Color* tekstinVari){
+actions::actions(const int* block_size_ptr, map<pair<int,int>, block>* kartta, map<pair<int,int>, vector<SDL_Texture*>>* piirrettavat,
+                 const int* x_blocks, const int* y_blocks, vector<SDL_Texture*>* kuvat, TTF_Font* font, SDL_Color* tekstinVari){
     block_size_ptr_ = block_size_ptr;
     kartta_ = kartta;
     piirrettavat_ = piirrettavat;
@@ -23,7 +23,7 @@ actions::~actions(){
     tekstinVari_ = NULL;
 }
 
-void actions::showOptions(map<SDL_Rect*, int>* valikkoMappi, vector<SDL_Surface*>* tekstit, SDL_Renderer *ren,
+void actions::showOptions(map<SDL_Rect*, int>* valikkoMappi, vector<SDL_Texture*>* tekstit, SDL_Renderer *ren,
                           int* x, int* y, int* edellinen_x, int* edellinen_y){
     //tyhjennetään edelliset valikot pois muistista
     valikkoMappi->clear();
@@ -63,7 +63,9 @@ void actions::showOptions(map<SDL_Rect*, int>* valikkoMappi, vector<SDL_Surface*
         }
         //tallenetaan luotu valikkotekstilaatikko
         valikkoMappi->insert(pair<SDL_Rect*, int>(loota, optionsID.at(i)) );
-        tekstit->push_back(TTF_RenderText_Solid(font_, options[i].c_str(), *tekstinVari_));
+        SDL_Surface* temp = TTF_RenderText_Solid(font_, options[i].c_str(), *tekstinVari_);
+        tekstit->push_back(SDL_CreateTextureFromSurface(ren, temp));
+        SDL_FreeSurface(temp);
         sisaLootat.push_back(sisaLoota);
     }
 

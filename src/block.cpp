@@ -73,7 +73,7 @@ vector<int> block::getActionsID(){
     return actionsID_;
 }
 
-void block::SetImages(vector<SDL_Surface*> images){
+void block::SetImages(vector<SDL_Texture*> images){
     kuvat_ = images;
 }
 

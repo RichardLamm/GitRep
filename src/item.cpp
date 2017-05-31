@@ -2,7 +2,7 @@
 
 using namespace std;
 
-item::item(string name, SDL_Surface* kuva)
+item::item(string name, SDL_Texture* kuva)
 {
     name_ = name;
     kuva_ = kuva;
@@ -13,7 +13,7 @@ item::~item()
 
 }
 
-SDL_Surface* item::getImage(){
+SDL_Texture* item::getImage(){
     return kuva_;
 }
 

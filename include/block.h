@@ -17,7 +17,7 @@ public:
     block(int, int, int);
     virtual ~block();
     //asettaa laatalle kuvat
-    void SetImages(vector<SDL_Surface*>);
+    void SetImages(vector<SDL_Texture*>);
     //toiminnat tietylle laattatyypille
     void SetActions(int);
     //palauttaa laatan toiminnat
@@ -34,7 +34,7 @@ public:
 private:
     pair<int, int> ID_;
     int type_;
-    vector<SDL_Surface*> kuvat_;
+    vector<SDL_Texture*> kuvat_;
     vector<string> actionsString_;
     vector<int> actionsID_;
     vector<int> limits_;
