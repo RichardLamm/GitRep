@@ -12,11 +12,11 @@ class actions
 {
     public:
         //init: annetaan luokalle osoittimet tarvittaviin muuttujiin
-        actions(const int* block_size_ptr, map<pair<int,int>, block>* kartta, map<pair<int,int>, vector<SDL_Surface*>>* piirrettavat,
-                 const int* x_blocks, const int* y_blocks, vector<SDL_Surface*>* kuvat, TTF_Font* font, SDL_Color* tekstinVari);
+        actions(const int* block_size_ptr, map<pair<int,int>, block>* kartta, map<pair<int,int>, vector<SDL_Texture*>>* piirrettavat,
+                 const int* x_blocks, const int* y_blocks, vector<SDL_Texture*>* kuvat, TTF_Font* font, SDL_Color* tekstinVari);
         virtual ~actions();
         //funktio, joka piirt‰‰ valikon ruudulle
-        void showOptions(map<SDL_Rect*, int>* valikkoMappi, vector<SDL_Surface*>* tekstit, SDL_Renderer *ren,
+        void showOptions(map<SDL_Rect*, int>* valikkoMappi, vector<SDL_Texture*>* tekstit, SDL_Renderer *ren,
                           int* x, int* y, int* edellinen_x, int* edellinen_y);
         //tarkastaa, onko klikattu jotakin valikon kohdetta ja tekee sen mukaiset toiminnot
         void selectOption(map<SDL_Rect*, int>* valikkoMappi, player* pelaaja_ptr, map<pair<int,int>, block>* kartta, SDL_Renderer *ren,
@@ -29,10 +29,10 @@ class actions
         map<pair<int,int>, block>* kartta_;
         int edellinenValikkoX_{-1};
         int edellinenValikkoY_{-1};
-        map<pair<int,int>, vector<SDL_Surface*>>* piirrettavat_;
+        map<pair<int,int>, vector<SDL_Texture*>>* piirrettavat_;
         const int* x_blocks_;
         const int* y_blocks_;
-        vector<SDL_Surface*>* kuvat_;
+        vector<SDL_Texture*>* kuvat_;
         TTF_Font* font_;
         SDL_Color* tekstinVari_;
 };

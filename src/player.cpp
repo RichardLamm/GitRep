@@ -1,11 +1,12 @@
 #include "player.h"
 
-player::player(){
+player::player(SDL_Renderer* ren){
     tekstinVari_.b = 100;
     tekstinVari_.r = 0;
     tekstinVari_.g = 0;
     tekstinVari_.a = 255;
     font_ = TTF_OpenFont("ARIAL.TTF", 15);
+    ren_ = ren;
 }
 
 player::~player(){
@@ -26,7 +27,7 @@ void player::setItem(item* tavara){
     return;
 }
 
-void player::initResource(int ID, string name, SDL_Surface* kuva){
+void player::initResource(int ID, string name, SDL_Texture* kuva){
     Resurssi resurssi;
     resurssi.ID = ID;
     resurssi.name = name;
@@ -35,7 +36,9 @@ void player::initResource(int ID, string name, SDL_Surface* kuva){
     stringstream lukuStream;
     lukuStream << resurssi.quantity;
     string luku = lukuStream.str();
-    resurssi.maaraKuva = TTF_RenderText_Solid(font_, luku.c_str(), tekstinVari_);
+    SDL_Surface* temp = TTF_RenderText_Solid(font_, luku.c_str(), tekstinVari_);
+    resurssi.maaraKuva = SDL_CreateTextureFromSurface(ren_, temp);
+    SDL_FreeSurface(temp);
     resurssit_.push_back(resurssi);
 }
 
@@ -57,7 +60,9 @@ void player::addResource(int ID, int quantity, string name){
             stringstream lukuStream;
             lukuStream << it->quantity;
             string luku = lukuStream.str();
-            it->maaraKuva = TTF_RenderText_Solid(font_, luku.c_str(), tekstinVari_);
+            SDL_Surface* temp = TTF_RenderText_Solid(font_, luku.c_str(), tekstinVari_);
+            it->maaraKuva = SDL_CreateTextureFromSurface(ren_, temp);
+            SDL_FreeSurface(temp);
             return;
         }
     }
@@ -80,7 +85,9 @@ bool player::useResource(int ID, int quantity){
                 stringstream lukuStream;
                 lukuStream << it->quantity;
                 string luku = lukuStream.str();
-                it->maaraKuva = TTF_RenderText_Solid(font_, luku.c_str(), tekstinVari_);
+                SDL_Surface* temp = TTF_RenderText_Solid(font_, luku.c_str(), tekstinVari_);
+                it->maaraKuva = SDL_CreateTextureFromSurface(ren_, temp);
+                SDL_FreeSurface(temp);
                 return true;
             }
         }
@@ -89,8 +96,8 @@ bool player::useResource(int ID, int quantity){
     return false;
 }
 
-vector<pair<SDL_Surface*, SDL_Surface*>> player::drawResources(){
-    vector<pair<SDL_Surface*, SDL_Surface*>> resursssiKuvat;
+vector<pair<SDL_Texture*, SDL_Texture*>> player::drawResources(){
+    vector<pair<SDL_Texture*, SDL_Texture*>> resursssiKuvat;
     for(auto resurssi : resurssit_){
         if(resurssi.kuvake != NULL && resurssi.maaraKuva != NULL){
             resursssiKuvat.push_back({resurssi.kuvake, resurssi.maaraKuva});

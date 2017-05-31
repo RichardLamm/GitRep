@@ -10,16 +10,16 @@ using namespace std;
 class item
 {
     public:
-        item(string, SDL_Surface*);
+        item(string, SDL_Texture*);
         virtual ~item();
-        SDL_Surface* getImage();
+        SDL_Texture* getImage();
         string getName();
 
     protected:
 
     private:
         string name_;
-        SDL_Surface* kuva_;
+        SDL_Texture* kuva_;
         //TODO: lis‰‰ itemin statsit
 };
 

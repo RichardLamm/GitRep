@@ -7,8 +7,8 @@
 
 
 /*TODO:
-    -valikko
-    -oikeasti jonkinlaista interactaamista palikoiden kanssa
+    -Research/skillit
+    -minimap ja isompi kartta
     -painotetut blockien generoinnit
     -lisää kohteita maastoon
     -resurssien kerääminen ja säilöminen
@@ -47,7 +47,7 @@ int main(int argc, char *argv[])
     tekstinVari.a = 255;
     TTF_Font* font = TTF_OpenFont("ARIAL.TTF", 15);
     //TTF_SetFontOutline(font, 1);
-    vector<SDL_Surface*> tekstit;
+    vector<SDL_Texture*> tekstit;
 
     int pelaaja_x = 896;
     int pelaaja_y = 448;
@@ -65,8 +65,6 @@ int main(int argc, char *argv[])
     bool craftActive = false;
     SDL_Event e;
     vector<item*> tavarat;
-    player* pelaaja_ptr = new player;
-
 
     //ikkunan luominen
     SDL_Window *win = SDL_CreateWindow("da Peli", 0, 0, window_width, window_height, SDL_WINDOW_SHOWN|SDL_WINDOW_RESIZABLE|SDL_WINDOW_INPUT_GRABBED|SDL_WINDOW_BORDERLESS);
@@ -87,28 +85,32 @@ int main(int argc, char *argv[])
     SDL_Renderer *pauseRen = SDL_CreateRenderer(pauseWin, -1, SDL_RENDERER_ACCELERATED);
     SDL_Renderer *craftRen = SDL_CreateRenderer(craftWin, -1, SDL_RENDERER_ACCELERATED);
 
+    player* pelaaja_ptr = new player(ren);
+
     //lataa kuvat
-    SDL_Surface * taustaRuoho = lataaKuva("bmp/grass.bmp", false);
-    SDL_Surface * taustaSora = lataaKuva("bmp/ground.bmp", false);
-    SDL_Surface * vesi = lataaKuva("bmp/water.bmp", false);
-    SDL_Surface * puu = lataaKuva("bmp/tree_S.bmp", true);
-    SDL_Surface * kivi = lataaKuva("bmp/rock_S.bmp", true);
+    SDL_Texture * taustaRuoho = lataaKuva(ren, "bmp/grass.bmp", false);
+    SDL_Texture * taustaSora = lataaKuva(ren, "bmp/ground.bmp", false);
+    SDL_Texture * vesi = lataaKuva(ren, "bmp/water.bmp", false);
+    SDL_Texture * puu = lataaKuva(ren, "bmp/tree_S.bmp", true);
+    SDL_Texture * kivi = lataaKuva(ren, "bmp/rock_S.bmp", true);
 
-    SDL_Surface * pelaaja = lataaKuva("bmp/player.bmp", true);
-    SDL_Surface * kirves = lataaKuva("bmp/axe.bmp", true);
-    SDL_Surface * hakku = lataaKuva("bmp/pick.bmp", true);
-    SDL_Surface * viikate = lataaKuva("bmp/scythe.bmp", true);
-    SDL_Surface * ampari = lataaKuva("bmp/bucket.bmp", true);
+    SDL_Texture * pelaaja = lataaKuva(ren, "bmp/player.bmp", true);
+    SDL_Texture * kirves = lataaKuva(ren, "bmp/axe.bmp", true);
+    SDL_Texture * hakku = lataaKuva(ren, "bmp/pick.bmp", true);
+    SDL_Texture * viikate = lataaKuva(ren, "bmp/scythe.bmp", true);
+    SDL_Texture * ampari = lataaKuva(ren, "bmp/bucket.bmp", true);
 
-    SDL_Surface * UI = lataaKuva("bmp/UI.bmp", false);
-    SDL_Surface * valinta = lataaKuva("bmp/select.bmp", true);
-    SDL_Surface * ruoho_resurssi = lataaKuva("bmp/grass_Res.bmp", true);
-    SDL_Surface * puu_resurssi = lataaKuva("bmp/log_Res.bmp", true);
-    SDL_Surface * kivi_resurssi = lataaKuva("bmp/rock_Res.bmp", true);
-    SDL_Surface * vesi_resurssi = lataaKuva("bmp/water_Res.bmp", true);
+    SDL_Texture * UI = lataaKuva(ren, "bmp/UI.bmp", false);
+    SDL_Texture * valinta = lataaKuva(ren, "bmp/select.bmp", true);
+    SDL_Texture * ruoho_resurssi = lataaKuva(ren, "bmp/grass_Res.bmp", true);
+    SDL_Texture * puu_resurssi = lataaKuva(ren, "bmp/log_Res.bmp", true);
+    SDL_Texture * kivi_resurssi = lataaKuva(ren, "bmp/rock_Res.bmp", true);
+    SDL_Texture * vesi_resurssi = lataaKuva(ren, "bmp/water_Res.bmp", true);
 
     tekstinVari.r = 150;
-    SDL_Surface * pauseText = TTF_RenderText_Solid(font, "Quit? (Y/N)", tekstinVari);
+    SDL_Surface* tempText = TTF_RenderText_Solid(font, "Quit? (Y/N)", tekstinVari);
+    SDL_Texture * pauseText = SDL_CreateTextureFromSurface(pauseRen, tempText);
+    SDL_FreeSurface(tempText);
     tekstinVari.r = 0;
 
     pelaaja_ptr->initResource(0, "ruoho", ruoho_resurssi);
@@ -117,7 +119,7 @@ int main(int argc, char *argv[])
     pelaaja_ptr->initResource(3, "vesi", vesi_resurssi);
 
     //luodaan vektori, jossa on kaikki käytettävät kuvat
-    vector<SDL_Surface*> kuvat;
+    vector<SDL_Texture*> kuvat;
     kuvat.push_back(taustaRuoho);
     kuvat.push_back(taustaSora);
     kuvat.push_back(pelaaja);
@@ -126,16 +128,16 @@ int main(int argc, char *argv[])
     kuvat.push_back(vesi);
 
     pair<int, int> pari;
-    map<pair<int,int>, vector<SDL_Surface*>> piirrettavat;
+    map<pair<int,int>, vector<SDL_Texture*>> piirrettavat;
 
-    piirrettavat.insert(pair<pair<int,int>, vector<SDL_Surface*>>({-2,-2}, {UI}));
+    piirrettavat.insert(pair<pair<int,int>, vector<SDL_Texture*>>({-2,-2}, {UI}));
 
     //generoi mappi, tällä hetkellä randomisoi mapin
     map<pair<int,int>, block> kartta = generateMap(x_blocks, y_blocks);
 
     actions* actions_ptr = new actions(&block_size, &kartta, &piirrettavat, &x_blocks, &y_blocks, &kuvat, font, &tekstinVari);
 
-    vector<SDL_Surface*> piirto;
+    vector<SDL_Texture*> piirto;
     for (int i = 0; i<x_blocks; i++){
         for (int j = 0; j<y_blocks; j++){
             //piirtää taustan kartta-mapin tietojen perusteella
@@ -143,7 +145,7 @@ int main(int argc, char *argv[])
             piirto = maaritaPiirrettavat((kartta.at(kohta).getType()), kuvat);
             kartta.at(kohta).SetImages(piirto);
             //assosioidaan piirrettävät kuvat oikean blockin kanssa
-            piirrettavat.insert(pair<pair<int,int>, vector<SDL_Surface*>>({i, j}, piirto));
+            piirrettavat.insert(pair<pair<int,int>, vector<SDL_Texture*>>({i, j}, piirto));
         }
     }
 
@@ -356,7 +358,7 @@ int main(int argc, char *argv[])
         try{
             if(teksti == NULL){throw -1;}
             else{
-                SDL_FreeSurface(teksti);
+                SDL_DestroyTexture(teksti);
             }
         }
         catch(int e){
@@ -371,22 +373,24 @@ int main(int argc, char *argv[])
     delete pelaaja_ptr;
 
     TTF_CloseFont(font);
-    SDL_FreeSurface(pelaaja);
+    SDL_DestroyTexture(pelaaja);
 
-    SDL_FreeSurface(taustaRuoho);
-    SDL_FreeSurface(taustaSora);
-    SDL_FreeSurface(kivi);
-    SDL_FreeSurface(puu);
-    SDL_FreeSurface(vesi);
+    SDL_DestroyTexture(taustaRuoho);
+    SDL_DestroyTexture(taustaSora);
+    SDL_DestroyTexture(kivi);
+    SDL_DestroyTexture(puu);
+    SDL_DestroyTexture(vesi);
 
-    SDL_FreeSurface(UI);
-    SDL_FreeSurface(kirves);
-    SDL_FreeSurface(hakku);
-    SDL_FreeSurface(viikate);
-    SDL_FreeSurface(valinta);
-    SDL_FreeSurface(ruoho_resurssi);
-    SDL_FreeSurface(puu_resurssi);
-    SDL_FreeSurface(pauseText);
+    SDL_DestroyTexture(UI);
+    SDL_DestroyTexture(kirves);
+    SDL_DestroyTexture(hakku);
+    SDL_DestroyTexture(viikate);
+    SDL_DestroyTexture(valinta);
+    SDL_DestroyTexture(ruoho_resurssi);
+    SDL_DestroyTexture(puu_resurssi);
+    SDL_DestroyTexture(pauseText);
+
+    //destroy texture
 
     SDL_DestroyRenderer(ren);
     SDL_DestroyRenderer(pauseRen);

@@ -16,24 +16,22 @@ void alustaPiirto(const int* block_size, const int* window_height, const int* wi
     y_blocks_ptr = y_blocks;
 }
 
-void piirra(SDL_Surface *kuvaT, SDL_Renderer *renT, int x, int y, int w, int h){
+void piirra(SDL_Texture *kuvaT, SDL_Renderer *renT, int x, int y, int w, int h){
     SDL_Rect alue;
     alue.x = x;
     alue.y = y;
     alue.w = w;
     alue.h = h;
 
-    SDL_Texture *tex = SDL_CreateTextureFromSurface(renT, kuvaT);
     //renderöijä, tekstuuri, alkuperäisen kuvan alue, piirtoalue ikkunassa
-    SDL_RenderCopy(renT, tex ,NULL, &alue );
-    //SDL_RenderPresent(renT);
+    SDL_RenderCopy(renT, kuvaT ,NULL, &alue );
     return;
 }
 
-vector<SDL_Surface*> maaritaPiirrettavat(int tyyppi, vector<SDL_Surface*> kuvat)
+vector<SDL_Texture*> maaritaPiirrettavat(int tyyppi, vector<SDL_Texture*> kuvat)
 {
     enum {ruoho, sora, pelaaja, puu, kivi, vesi};
-    vector<SDL_Surface*> palautettava;
+    vector<SDL_Texture*> palautettava;
     switch(tyyppi)
     {
     //ruohikko
@@ -64,7 +62,7 @@ vector<SDL_Surface*> maaritaPiirrettavat(int tyyppi, vector<SDL_Surface*> kuvat)
     return palautettava;
 }
 
-void piirraTausta(map<pair<int,int>, vector<SDL_Surface*>> piirrettavat, SDL_Renderer *ren, pair<int, int> pari)
+void piirraTausta(map<pair<int,int>, vector<SDL_Texture*>> piirrettavat, SDL_Renderer *ren, pair<int, int> pari)
 {
     //koko ruudun piirto
     if (pari.first == -1 && pari.second == -1){
@@ -100,13 +98,14 @@ void piirraTausta(map<pair<int,int>, vector<SDL_Surface*>> piirrettavat, SDL_Ren
     return;
 }
 
-SDL_Surface* lataaKuva(string path, bool lapinakyva)
+SDL_Texture* lataaKuva(SDL_Renderer* renT, string path, bool lapinakyva)
 {
     SDL_Surface * kuva = SDL_LoadBMP(path.c_str());
     if( lapinakyva == true){
         //asetetaan kuvista väri rgb(0,255,255) läpinäkyväksi -> tausta on läpinäkyvä
         SDL_SetColorKey(kuva, SDL_TRUE, SDL_MapRGB(kuva->format, 0, 0xFF, 0xFF));
     }
-    SDL_Surface * optimoitu = SDL_ConvertSurface(kuva, kuva->format, 0);
+    SDL_Texture * optimoitu = SDL_CreateTextureFromSurface(renT, kuva);
+    SDL_FreeSurface(kuva);
     return optimoitu;
 }
