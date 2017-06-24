@@ -26,6 +26,57 @@ const int x_blocks = (window_width-(window_width%block_size))/block_size;       
 const int y_blocks = (window_height-(window_height%block_size))/block_size;     //16, 875
 
 
+void swapToTop(int toTop, vector<int>* windowVector){
+    std::cerr << windowVector->size() << " -> ";
+
+    //jos alkio on jo oikeassa paikassa
+    if(windowVector->back() == toTop){
+            std::cerr << windowVector->size() << "[";
+            for(auto alkio : *windowVector){
+                std::cerr << alkio << ", ";
+            }
+            std::cerr << "] alkio valmiiksi viimeisenä" << std::endl;
+        return;
+    }
+    //muutoin käy läpi vektorin, ja etsii vaihdettavaa alkiota.
+    for(vector<int>::iterator it{windowVector->end()-1}; it!=windowVector->begin(); it--){
+        //jos alkio löytyy, vaihdetaan se vektorin viimeiseksi.
+        std::cerr << std::endl;
+        std::cerr << *it << " <--> " << toTop << std::endl;
+        if(*it == toTop){
+            windowVector->push_back(*it);
+            windowVector->erase(it);
+    std::cerr << windowVector->size() << "[";
+            for(auto alkio : *windowVector){
+                std::cerr << alkio << ", ";
+            }
+            std::cerr << "] alkio löytyi, ja siirrettiin viimeiseksi" << std::endl;
+            return;
+        }
+    }
+    //jos alkiota ei ole vielä löydetty, lisätään se vektorin viimeiseksi
+    windowVector->push_back(toTop);
+    std::cerr << windowVector->size() << "[";
+            for(auto alkio : *windowVector){
+                std::cerr << alkio << ", ";
+            }
+            std::cerr << "] alkio lisättiin" << std::endl;
+    return;
+}
+
+void eraseWindow(int toErase, vector<int>* windowVector){
+    std::cerr << windowVector->size() << " (";
+    for(vector<int>::iterator it{windowVector->end()-1}; it!=windowVector->begin(); it--){
+        if(*it == toErase){
+                std::cerr << *it << ") -> ";
+            windowVector->erase(it);
+            std::cerr << windowVector->size() << std::endl;
+            return;
+        }
+    }
+}
+
+
 using namespace std;
 
 
@@ -63,6 +114,8 @@ int main(int argc, char *argv[])
     bool mapActive = false;
     bool pauseActive = false;
     bool craftActive = false;
+    enum window{game, map, pause, craft};
+    vector<int>* activeWindow = new vector<int>{window::game};
     SDL_Event e;
     vector<item*> tavarat;
 
@@ -128,12 +181,12 @@ int main(int argc, char *argv[])
     kuvat.push_back(vesi);
 
     pair<int, int> pari;
-    map<pair<int,int>, vector<SDL_Texture*>> piirrettavat;
+    std::map<std::pair<int,int>, std::vector<SDL_Texture*>> piirrettavat;
 
     piirrettavat.insert(pair<pair<int,int>, vector<SDL_Texture*>>({-2,-2}, {UI}));
 
     //generoi mappi, tällä hetkellä randomisoi mapin
-    map<pair<int,int>, block> kartta = generateMap(x_blocks, y_blocks);
+    std::map<std::pair<int,int>, block> kartta = generateMap(x_blocks, y_blocks);
 
     actions* actions_ptr = new actions(&block_size, &kartta, &piirrettavat, &x_blocks, &y_blocks, &kuvat, font, &tekstinVari);
 
@@ -191,9 +244,11 @@ int main(int argc, char *argv[])
                     //hakee hiiren koordinaatit
                     SDL_GetMouseState( &pelaaja_x, &pelaaja_y);
                     //jos klikkaus oli pelialueen sisällä
-                    if (pelaaja_x >= 0 && pelaaja_x <= x_blocks*block_size && pelaaja_y >= 0 && pelaaja_y <= y_blocks*block_size){
-                        actions_ptr->movePlayer(ren, &pelaaja_x, &pelaaja_y, &edellinen_x, &edellinen_y);
-                        muutos = 1;
+                    if(activeWindow->back() == window::game){
+                        if (pelaaja_x >= 0 && pelaaja_x <= x_blocks*block_size && pelaaja_y >= 0 && pelaaja_y <= y_blocks*block_size){
+                            actions_ptr->movePlayer(ren, &pelaaja_x, &pelaaja_y, &edellinen_x, &edellinen_y);
+                            muutos = 1;
+                        }
                     }
                 }
 
@@ -214,12 +269,14 @@ int main(int argc, char *argv[])
                 if( state[SDL_SCANCODE_ESCAPE]){
                     if(pauseActive == false){
                         SDL_ShowWindow(pauseWin);
+                        swapToTop(window::pause, activeWindow);
                         piirra(pauseText, pauseRen, block_size, block_size/2, block_size*4, block_size);
                         SDL_RenderPresent(pauseRen);
                         pauseActive = true;
                     }
                     else if(pauseActive == true){
                         SDL_HideWindow(pauseWin);
+                        eraseWindow(window::pause, activeWindow);
                         pauseActive = false;
                     }
                 }
@@ -256,10 +313,12 @@ int main(int argc, char *argv[])
                         //kartan määrittely tänne
                         if(mapActive == false){
                             SDL_ShowWindow(mapWin);
+                            swapToTop(window::map, activeWindow);
                             mapActive = true;
                         }
                         else if(mapActive == true){
                             SDL_HideWindow(mapWin);
+                            eraseWindow(window::map, activeWindow);
                             mapActive = false;
                         }
                     }
@@ -269,10 +328,12 @@ int main(int argc, char *argv[])
                         //kartan määrittely tänne
                         if(craftActive == false){
                             SDL_ShowWindow(craftWin);
+                            swapToTop(window::craft, activeWindow);
                             craftActive = true;
                         }
                         else if(craftActive == true){
                             SDL_HideWindow(craftWin);
+                            eraseWindow(window::craft, activeWindow);
                             craftActive = false;
                         }
                     }
@@ -371,6 +432,8 @@ int main(int argc, char *argv[])
     tavarat.clear();
     kartta.clear();
     delete pelaaja_ptr;
+    activeWindow->clear();
+    delete activeWindow;
 
     TTF_CloseFont(font);
     SDL_DestroyTexture(pelaaja);
